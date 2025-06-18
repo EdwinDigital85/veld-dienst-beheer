@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -130,13 +129,20 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-[#0c6be0] text-white shadow-lg">
+      {/* Header with Logo */}
+      <header className="bg-white shadow-md border-b-4 border-[#0c6be0]">
         <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Bardiensten</h1>
-              <p className="text-blue-100 mt-1 text-sm sm:text-base">Voetbalclub - Vrijwilligersrooster</p>
+            <div className="flex items-center gap-4">
+              <img 
+                src="/lovable-uploads/cae344b2-9f96-4d55-97c3-b84fadef3473.png" 
+                alt="v.v. Boskant Logo" 
+                className="h-16 w-auto"
+              />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Bardiensten</h1>
+                <p className="text-gray-600 mt-1 text-sm sm:text-base">v.v. Boskant - Vrijwilligersrooster</p>
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               <Button
@@ -151,7 +157,7 @@ export default function Index() {
               <Button
                 variant="outline"
                 onClick={() => setShowAdminLogin(true)}
-                className="bg-white text-[#0c6be0] hover:bg-gray-100 border-white text-sm"
+                className="bg-[#0c6be0] text-white border-[#0c6be0] hover:bg-[#0952b8] hover:border-[#0952b8] text-sm"
                 size="sm"
               >
                 Admin Login

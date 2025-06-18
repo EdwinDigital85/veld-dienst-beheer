@@ -4,8 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, CalendarDays, Users } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
+import { ChevronLeft, ChevronRight, CalendarDays, Users, Clock } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday } from "date-fns";
 import { nl } from "date-fns/locale";
 
 interface BarShift {
@@ -80,10 +80,13 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
     }
   };
 
-  const getDaysInMonth = () => {
+  const getCalendarDays = () => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(currentDate);
-    return eachDayOfInterval({ start: monthStart, end: monthEnd });
+    const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 }); // Monday
+    const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
+    
+    return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   };
 
   const getShiftsForDay = (day: Date) => {
@@ -92,16 +95,16 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
     );
   };
 
-  const getStatusBadge = (shift: BarShift) => {
+  const getStatusColor = (shift: BarShift) => {
     const count = registrationCounts[shift.id] || 0;
     
     if (shift.status === "closed") {
-      return <Badge variant="destructive" className="text-[10px] px-1 py-0">Gesloten</Badge>;
+      return "bg-gray-500";
     }
     if (shift.status === "full" || count >= shift.max_people) {
-      return <Badge variant="destructive" className="text-[10px] px-1 py-0">Vol</Badge>;
+      return "bg-red-500";
     }
-    return <Badge variant="secondary" className="text-[10px] px-1 py-0">{count}/{shift.max_people}</Badge>;
+    return "bg-green-500";
   };
 
   const canRegister = (shift: BarShift) => {
@@ -109,7 +112,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
     return shift.status === "open" && count < shift.max_people;
   };
 
-  const days = getDaysInMonth();
+  const days = getCalendarDays();
   const monthName = format(currentDate, "MMMM yyyy", { locale: nl });
 
   if (loading) {
@@ -122,59 +125,71 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-4">
+    <Card className="bg-white shadow-lg">
+      <CardHeader className="pb-4 bg-gradient-to-r from-[#0c6be0] to-[#0952b8] text-white rounded-t-lg">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="text-lg text-gray-800 flex items-center">
-            <CalendarDays className="h-5 w-5 mr-2 text-[#0c6be0]" />
+          <CardTitle className="text-xl text-white flex items-center">
+            <CalendarDays className="h-6 w-6 mr-3" />
             Bardiensten Kalender
           </CardTitle>
-          <div className="flex items-center gap-1 w-full sm:w-auto justify-center">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-              className="px-2 h-8"
+              className="text-white hover:bg-white/20 h-10 w-10 p-0"
             >
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft className="h-5 w-5" />
             </Button>
-            <span className="text-sm font-semibold px-3 min-w-[120px] text-center">
+            <span className="text-lg font-semibold px-4 min-w-[160px] text-center">
               {monthName}
             </span>
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-              className="px-2 h-8"
+              className="text-white hover:bg-white/20 h-10 w-10 p-0"
             >
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight className="h-5 w-5" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-2">
-        <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
-            <div key={day} className="text-center text-xs font-medium text-gray-500 p-1 h-6">
-              {day}
+      <CardContent className="p-4">
+        {/* Weekday Headers */}
+        <div className="grid grid-cols-7 gap-2 mb-4">
+          {['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'].map(day => (
+            <div key={day} className="text-center text-sm font-semibold text-gray-700 p-2 bg-gray-50 rounded">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.slice(0, 2)}</span>
             </div>
           ))}
         </div>
         
-        <div className="grid grid-cols-7 gap-1">
+        {/* Calendar Grid */}
+        <div className="grid grid-cols-7 gap-2">
           {days.map((day, index) => {
             const dayShifts = getShiftsForDay(day);
             const isCurrentMonth = isSameMonth(day, currentDate);
+            const isCurrentDay = isToday(day);
             
             return (
               <div
                 key={index}
-                className={`min-h-[60px] sm:min-h-[80px] p-1 border rounded text-xs ${
-                  isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                className={`min-h-[100px] sm:min-h-[120px] p-2 rounded-lg border-2 transition-all ${
+                  isCurrentMonth 
+                    ? isCurrentDay 
+                      ? 'bg-blue-50 border-[#0c6be0]' 
+                      : 'bg-white border-gray-200 hover:border-gray-300' 
+                    : 'bg-gray-50 border-gray-100'
                 }`}
               >
-                <div className={`text-xs font-medium mb-1 ${
-                  isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                <div className={`text-sm font-semibold mb-2 ${
+                  isCurrentMonth 
+                    ? isCurrentDay 
+                      ? 'text-[#0c6be0]' 
+                      : 'text-gray-900' 
+                    : 'text-gray-400'
                 }`}>
                   {format(day, 'd')}
                 </div>
@@ -182,38 +197,36 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                 <div className="space-y-1">
                   {dayShifts.map(shift => {
                     const count = registrationCounts[shift.id] || 0;
-                    const names = registrationNames[shift.id] || [];
                     const isFull = count >= shift.max_people || shift.status === "full";
                     
                     return (
                       <div
                         key={shift.id}
-                        className={`text-[10px] p-1 rounded cursor-pointer border transition-colors overflow-hidden ${
+                        className={`text-xs p-2 rounded-md cursor-pointer border transition-all hover:shadow-md ${
                           canRegister(shift)
-                            ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                            ? 'bg-green-50 border-green-200 hover:bg-green-100'
                             : isFull 
-                            ? 'bg-red-50 border-red-200 opacity-75'
+                            ? 'bg-red-50 border-red-200'
                             : 'bg-gray-50 border-gray-200'
                         }`}
                         onClick={() => onShiftSelect(shift)}
                       >
-                        <div className="font-medium truncate mb-1" title={shift.title}>
+                        <div className="font-semibold truncate mb-1" title={shift.title}>
                           {shift.title}
                         </div>
-                        <div className="text-gray-600 mb-1 truncate">
-                          {shift.start_time.slice(0, 5)}-{shift.end_time.slice(0, 5)}
+                        <div className="flex items-center gap-1 text-gray-600 mb-1">
+                          <Clock className="h-3 w-3" />
+                          <span className="truncate">
+                            {shift.start_time.slice(0, 5)}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-1">
-                            <Users className="h-2 w-2" />
-                            {getStatusBadge(shift)}
+                            <Users className="h-3 w-3" />
+                            <span className="text-xs">{count}/{shift.max_people}</span>
                           </div>
+                          <div className={`w-2 h-2 rounded-full ${getStatusColor(shift)}`}></div>
                         </div>
-                        {names.length > 0 && (
-                          <div className="text-[9px] text-gray-500 truncate mt-1 hidden sm:block" title={names.join(', ')}>
-                            {names.slice(0, 2).join(', ')}{names.length > 2 ? '...' : ''}
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -223,10 +236,27 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
           })}
         </div>
 
+        {/* Legend */}
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span>Beschikbaar</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span>Vol/Gesloten</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+            <span>Uitgeschakeld</span>
+          </div>
+        </div>
+
         {shifts.length === 0 && (
-          <div className="text-center py-8 text-gray-500">
-            <CalendarDays className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-            <p className="text-sm">Geen bardiensten gepland voor {monthName.toLowerCase()}</p>
+          <div className="text-center py-12 text-gray-500">
+            <CalendarDays className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+            <p className="text-lg font-medium">Geen bardiensten gepland</p>
+            <p className="text-sm">Voor {monthName.toLowerCase()}</p>
           </div>
         )}
       </CardContent>

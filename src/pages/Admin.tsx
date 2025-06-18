@@ -70,20 +70,27 @@ export default function Admin() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-[#0c6be0] text-white shadow-lg">
+      {/* Header with Logo */}
+      <header className="bg-white shadow-md border-b-4 border-[#0c6be0]">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-blue-100 mt-1 text-sm">
-                Welkom terug, {adminData?.name}
-              </p>
+            <div className="flex items-center gap-4">
+              <img 
+                src="/lovable-uploads/cae344b2-9f96-4d55-97c3-b84fadef3473.png" 
+                alt="v.v. Boskant Logo" 
+                className="h-16 w-auto"
+              />
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Admin Dashboard</h1>
+                <p className="text-gray-600 mt-1 text-sm">
+                  Welkom terug, {adminData?.name}
+                </p>
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 onClick={handleCreateShift}
-                className="bg-white text-[#0c6be0] hover:bg-gray-100 text-sm"
+                className="bg-[#0c6be0] text-white hover:bg-[#0952b8] text-sm"
                 size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -92,7 +99,7 @@ export default function Admin() {
               <Button
                 onClick={logout}
                 variant="outline"
-                className="bg-transparent border-white text-white hover:bg-white hover:text-[#0c6be0] text-sm"
+                className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 text-sm"
                 size="sm"
               >
                 <LogOut className="h-4 w-4 mr-2" />
@@ -121,7 +128,6 @@ export default function Admin() {
         </Tabs>
       </main>
 
-      {/* Create Shift Modal */}
       {showCreateForm && (
         <CreateShiftForm
           onClose={() => setShowCreateForm(false)}
