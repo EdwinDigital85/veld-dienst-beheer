@@ -30,7 +30,7 @@ export default function AdminRegistrations() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>("pending_removal");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -43,6 +43,7 @@ export default function AdminRegistrations() {
 
   const fetchRegistrations = async () => {
     try {
+      console.log("Fetching registrations...");
       const { data, error } = await supabase
         .from("registrations")
         .select(`
@@ -56,11 +57,20 @@ export default function AdminRegistrations() {
         `)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching registrations:", error);
+        throw error;
+      }
 
+      console.log("Fetched registrations:", data);
       setRegistrations(data || []);
     } catch (error) {
       console.error("Error fetching registrations:", error);
+      toast({
+        title: "Fout",
+        description: "Kon inschrijvingen niet laden.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -69,10 +79,14 @@ export default function AdminRegistrations() {
   const filterRegistrations = () => {
     let filtered = registrations;
     
-    if (statusFilter !== "all") {
-      filtered = registrations.filter(reg => reg.status === statusFilter);
+    if (statusFilter === "pending_removal") {
+      filtered = registrations.filter(reg => reg.status === "pending_removal");
+    } else if (statusFilter === "active") {
+      filtered = registrations.filter(reg => reg.status === "active");
     }
+    // "all" shows everything
 
+    console.log("Filtered registrations:", filtered);
     setFilteredRegistrations(filtered);
   };
 
@@ -160,13 +174,14 @@ export default function AdminRegistrations() {
       case "active":
         return <Badge className="bg-green-500 hover:bg-green-600">Actief</Badge>;
       case "pending_removal":
-        return <Badge variant="destructive">Wacht op goedkeuring</Badge>;
+        return <Badge variant="destructive">Wacht op uitschrijf-goedkeuring</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
 
   const pendingCount = registrations.filter(reg => reg.status === "pending_removal").length;
+  const activeCount = registrations.filter(reg => reg.status === "active").length;
 
   if (loading) {
     return (
@@ -181,25 +196,25 @@ export default function AdminRegistrations() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Inschrijvingen & Uitschrijvingsverzoeken</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Inschrijvingen Beheren</h2>
           <p className="text-gray-600">
             {registrations.length} inschrijvingen totaal
             {pendingCount > 0 && (
               <span className="ml-2 text-orange-600 font-medium">
-                ({pendingCount} uitschrijvingsverzoeken wachten op goedkeuring)
+                ({pendingCount} uitschrijfverzoeken wachten op goedkeuring)
               </span>
             )}
           </p>
         </div>
         
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-64">
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="pending_removal">Uitschrijvingsverzoeken ({pendingCount})</SelectItem>
-            <SelectItem value="active">Actieve inschrijvingen</SelectItem>
-            <SelectItem value="all">Alle statussen</SelectItem>
+            <SelectItem value="all">Alle inschrijvingen ({registrations.length})</SelectItem>
+            <SelectItem value="pending_removal">Uitschrijfverzoeken ({pendingCount})</SelectItem>
+            <SelectItem value="active">Actieve inschrijvingen ({activeCount})</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -209,7 +224,7 @@ export default function AdminRegistrations() {
           <div className="flex items-center">
             <AlertTriangle className="h-5 w-5 text-orange-600 mr-2" />
             <p className="text-orange-800 font-medium">
-              Er zijn {pendingCount} uitschrijvingsverzoeken die je aandacht nodig hebben.
+              Er zijn {pendingCount} uitschrijfverzoeken die je aandacht nodig hebben.
             </p>
             <Button
               variant="outline"
@@ -227,11 +242,11 @@ export default function AdminRegistrations() {
         <div className="text-center py-12">
           <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">
-            {statusFilter === "pending_removal" ? "Geen uitschrijvingsverzoeken" : "Geen inschrijvingen"}
+            {statusFilter === "pending_removal" ? "Geen uitschrijfverzoeken" : "Geen inschrijvingen"}
           </h3>
           <p className="text-gray-500">
             {statusFilter === "pending_removal" 
-              ? "Er zijn momenteel geen uitschrijvingsverzoeken die goedkeuring nodig hebben."
+              ? "Er zijn momenteel geen uitschrijfverzoeken die goedkeuring nodig hebben."
               : statusFilter === "active"
               ? "Er zijn geen actieve inschrijvingen."
               : "Er zijn nog geen inschrijvingen voor bardiensten."
