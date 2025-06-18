@@ -90,9 +90,9 @@ export default function Index() {
       return <Badge variant="destructive">Gesloten</Badge>;
     }
     if (shift.status === "full" || count >= shift.max_people) {
-      return <Badge variant="destructive">Vol</Badge>;
+      return <Badge variant="destructive">Vol ({count}/{shift.max_people})</Badge>;
     }
-    return <Badge variant="secondary">{count} personen</Badge>;
+    return <Badge variant="secondary">{count}/{shift.max_people} personen</Badge>;
   };
 
   const canRegister = (shift: BarShift) => {
@@ -184,9 +184,13 @@ export default function Index() {
                   const count = registrationCounts[shift.id] || 0;
                   const names = registrationNames[shift.id] || [];
                   const shiftDate = new Date(shift.shift_date);
+                  const isFull = count >= shift.max_people || shift.status === "full";
+                  const isAvailable = canRegister(shift);
                   
                   return (
-                    <Card key={shift.id} className="hover:shadow-lg transition-shadow border-l-4 border-l-[#0c6be0]">
+                    <Card key={shift.id} className={`hover:shadow-lg transition-shadow border-l-4 ${
+                      isFull ? 'border-l-red-500 bg-red-50/30' : 'border-l-[#0c6be0]'
+                    }`}>
                       <CardHeader>
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-lg text-gray-800">{shift.title}</CardTitle>
@@ -207,7 +211,10 @@ export default function Index() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center text-sm">
                             <Users className="h-4 w-4 mr-2 text-[#0c6be0]" />
-                            <span className="font-medium">{count} personen ingeschreven</span>
+                            <span className="font-medium">
+                              {count}/{shift.max_people} personen ingeschreven
+                              {isFull && <span className="text-red-600 ml-2">(VOL)</span>}
+                            </span>
                           </div>
                         </div>
 
@@ -228,10 +235,16 @@ export default function Index() {
                         <div className="flex gap-2">
                           <Button
                             onClick={() => setSelectedShift(shift)}
-                            disabled={!canRegister(shift)}
-                            className="flex-1 bg-[#0c6be0] hover:bg-[#0952b8] disabled:bg-gray-300"
+                            disabled={!isAvailable}
+                            className={`flex-1 ${
+                              isAvailable 
+                                ? "bg-[#0c6be0] hover:bg-[#0952b8]" 
+                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                            }`}
                           >
-                            {!canRegister(shift) ? "Niet beschikbaar" : "Inschrijven"}
+                            {isFull ? "Vol - Niet beschikbaar" : 
+                             shift.status === "closed" ? "Gesloten" : 
+                             "Inschrijven"}
                           </Button>
                           <Button
                             variant="outline"

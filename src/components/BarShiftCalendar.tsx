@@ -99,9 +99,9 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
       return <Badge variant="destructive" className="text-xs">Gesloten</Badge>;
     }
     if (shift.status === "full" || count >= shift.max_people) {
-      return <Badge variant="destructive" className="text-xs">Vol</Badge>;
+      return <Badge variant="destructive" className="text-xs">Vol ({count}/{shift.max_people})</Badge>;
     }
-    return <Badge variant="secondary" className="text-xs">{count} personen</Badge>;
+    return <Badge variant="secondary" className="text-xs">{count}/{shift.max_people} personen</Badge>;
   };
 
   const canRegister = (shift: BarShift) => {
@@ -181,12 +181,16 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                   {dayShifts.map(shift => {
                     const count = registrationCounts[shift.id] || 0;
                     const names = registrationNames[shift.id] || [];
+                    const isFull = count >= shift.max_people || shift.status === "full";
+                    
                     return (
                       <div
                         key={shift.id}
                         className={`text-xs p-2 rounded cursor-pointer border transition-colors ${
                           canRegister(shift)
                             ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                            : isFull 
+                            ? 'bg-red-50 border-red-200 opacity-75'
                             : 'bg-gray-50 border-gray-200'
                         }`}
                         onClick={() => onShiftSelect(shift)}
@@ -199,14 +203,16 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                         </div>
                         <div className="flex items-center gap-1 mb-1">
                           <Users className="h-3 w-3" />
-                          <span className="text-gray-600">
-                            {count} personen
-                          </span>
                           {getStatusBadge(shift)}
                         </div>
                         {names.length > 0 && (
                           <div className="text-xs text-gray-500 truncate" title={names.join(', ')}>
                             {names.join(', ')}
+                          </div>
+                        )}
+                        {!canRegister(shift) && isFull && (
+                          <div className="text-xs text-red-600 font-medium mt-1">
+                            Niet beschikbaar
                           </div>
                         )}
                       </div>

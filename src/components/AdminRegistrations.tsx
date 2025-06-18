@@ -30,7 +30,7 @@ export default function AdminRegistrations() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("pending_removal");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -76,7 +76,7 @@ export default function AdminRegistrations() {
     setFilteredRegistrations(filtered);
   };
 
-  const approveRemoval = async (registrationId: string) => {
+  const approveRemoval = async (registrationId: string, registrationData: Registration) => {
     try {
       const { error } = await supabase
         .from("registrations")
@@ -87,7 +87,7 @@ export default function AdminRegistrations() {
 
       toast({
         title: "Uitschrijving goedgekeurd",
-        description: "De uitschrijving is succesvol verwerkt.",
+        description: `${registrationData.name} is uitgeschreven voor ${registrationData.bar_shifts.title}.`,
       });
 
       fetchRegistrations();
@@ -101,7 +101,7 @@ export default function AdminRegistrations() {
     }
   };
 
-  const rejectRemoval = async (registrationId: string) => {
+  const rejectRemoval = async (registrationId: string, registrationData: Registration) => {
     try {
       const { error } = await supabase
         .from("registrations")
@@ -112,7 +112,7 @@ export default function AdminRegistrations() {
 
       toast({
         title: "Uitschrijving geweigerd",
-        description: "De persoon blijft ingeschreven voor de bardienst.",
+        description: `${registrationData.name} blijft ingeschreven voor ${registrationData.bar_shifts.title}.`,
       });
 
       fetchRegistrations();
@@ -126,8 +126,8 @@ export default function AdminRegistrations() {
     }
   };
 
-  const deleteRegistration = async (registrationId: string) => {
-    if (!confirm("Weet je zeker dat je deze inschrijving wilt verwijderen?")) {
+  const deleteRegistration = async (registrationId: string, registrationData: Registration) => {
+    if (!confirm(`Weet je zeker dat je de inschrijving van ${registrationData.name} wilt verwijderen?`)) {
       return;
     }
 
@@ -141,7 +141,7 @@ export default function AdminRegistrations() {
 
       toast({
         title: "Inschrijving verwijderd",
-        description: "De inschrijving is succesvol verwijderd.",
+        description: `De inschrijving van ${registrationData.name} is verwijderd.`,
       });
 
       fetchRegistrations();
@@ -181,12 +181,12 @@ export default function AdminRegistrations() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Inschrijvingen Beheren</h2>
+          <h2 className="text-2xl font-bold text-gray-900">Inschrijvingen & Uitschrijvingsverzoeken</h2>
           <p className="text-gray-600">
             {registrations.length} inschrijvingen totaal
             {pendingCount > 0 && (
               <span className="ml-2 text-orange-600 font-medium">
-                ({pendingCount} wachten op goedkeuring)
+                ({pendingCount} uitschrijvingsverzoeken wachten op goedkeuring)
               </span>
             )}
           </p>
@@ -197,20 +197,28 @@ export default function AdminRegistrations() {
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="pending_removal">Uitschrijvingsverzoeken ({pendingCount})</SelectItem>
+            <SelectItem value="active">Actieve inschrijvingen</SelectItem>
             <SelectItem value="all">Alle statussen</SelectItem>
-            <SelectItem value="active">Actief</SelectItem>
-            <SelectItem value="pending_removal">Wacht op goedkeuring</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {pendingCount > 0 && statusFilter === "all" && (
+      {pendingCount > 0 && statusFilter !== "pending_removal" && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center">
             <AlertTriangle className="h-5 w-5 text-orange-600 mr-2" />
             <p className="text-orange-800 font-medium">
               Er zijn {pendingCount} uitschrijvingsverzoeken die je aandacht nodig hebben.
             </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStatusFilter("pending_removal")}
+              className="ml-auto"
+            >
+              Bekijk verzoeken
+            </Button>
           </div>
         </div>
       )}
@@ -218,11 +226,15 @@ export default function AdminRegistrations() {
       {filteredRegistrations.length === 0 ? (
         <div className="text-center py-12">
           <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">Geen inschrijvingen</h3>
+          <h3 className="text-xl font-semibold text-gray-600 mb-2">
+            {statusFilter === "pending_removal" ? "Geen uitschrijvingsverzoeken" : "Geen inschrijvingen"}
+          </h3>
           <p className="text-gray-500">
-            {statusFilter === "all" 
-              ? "Er zijn nog geen inschrijvingen voor bardiensten."
-              : `Geen inschrijvingen met status '${statusFilter === "active" ? "actief" : "wacht op goedkeuring"}'.`
+            {statusFilter === "pending_removal" 
+              ? "Er zijn momenteel geen uitschrijvingsverzoeken die goedkeuring nodig hebben."
+              : statusFilter === "active"
+              ? "Er zijn geen actieve inschrijvingen."
+              : "Er zijn nog geen inschrijvingen voor bardiensten."
             }
           </p>
         </div>
@@ -278,28 +290,33 @@ export default function AdminRegistrations() {
                   </div>
 
                   {registration.status === "pending_removal" ? (
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        onClick={() => approveRemoval(registration.id)}
-                        size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <Check className="h-4 w-4 mr-1" />
-                        Goedkeuren
-                      </Button>
-                      <Button
-                        onClick={() => rejectRemoval(registration.id)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <X className="h-4 w-4 mr-1" />
-                        Weigeren
-                      </Button>
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <p className="text-sm text-orange-800 mb-3 font-medium">
+                        🔔 Deze persoon wil zich uitschrijven en wacht op jouw goedkeuring.
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => approveRemoval(registration.id, registration)}
+                          size="sm"
+                          className="bg-green-600 hover:bg-green-700 text-white"
+                        >
+                          <Check className="h-4 w-4 mr-1" />
+                          Goedkeuren
+                        </Button>
+                        <Button
+                          onClick={() => rejectRemoval(registration.id, registration)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Weigeren
+                        </Button>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex gap-2 pt-2">
                       <Button
-                        onClick={() => deleteRegistration(registration.id)}
+                        onClick={() => deleteRegistration(registration.id, registration)}
                         variant="outline"
                         size="sm"
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
