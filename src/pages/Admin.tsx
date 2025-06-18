@@ -101,18 +101,19 @@ export default function Admin() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-[#0c6be0] text-white shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-              <p className="text-blue-100 mt-1">
+              <h1 className="text-2xl sm:text-3xl font-bold">Admin Dashboard</h1>
+              <p className="text-blue-100 mt-1 text-sm">
                 Welkom terug, {adminData?.name}
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => setShowCreateForm(true)}
-                className="bg-white text-[#0c6be0] hover:bg-gray-100"
+                className="bg-white text-[#0c6be0] hover:bg-gray-100 text-sm"
+                size="sm"
               >
                 <Plus className="h-4 w-4 mr-2" />
                 Nieuwe Bardienst
@@ -120,7 +121,8 @@ export default function Admin() {
               <Button
                 onClick={handleLogout}
                 variant="outline"
-                className="bg-transparent border-white text-white hover:bg-white hover:text-[#0c6be0]"
+                className="bg-transparent border-white text-white hover:bg-white hover:text-[#0c6be0] text-sm"
+                size="sm"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Uitloggen

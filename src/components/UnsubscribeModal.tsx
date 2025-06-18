@@ -32,11 +32,14 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
     setLoading(true);
 
     try {
+      console.log("Looking for registrations for email:", email.toLowerCase());
+      
       // Find active registrations for this email
       const { data: registrations, error: fetchError } = await supabase
         .from("registrations")
         .select(`
           id,
+          name,
           bar_shifts (
             title,
             shift_date,
@@ -46,7 +49,12 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
         .eq("email", email.toLowerCase())
         .eq("status", "active");
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching registrations:", fetchError);
+        throw fetchError;
+      }
+
+      console.log("Found registrations:", registrations);
 
       if (!registrations || registrations.length === 0) {
         toast({
@@ -57,14 +65,24 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
         return;
       }
 
+      console.log("Updating registrations to pending_removal for:", registrations.map(r => r.id));
+
       // Update all active registrations to pending_removal status
       const { error: updateError } = await supabase
         .from("registrations")
-        .update({ status: "pending_removal" })
+        .update({ 
+          status: "pending_removal",
+          updated_at: new Date().toISOString()
+        })
         .eq("email", email.toLowerCase())
         .eq("status", "active");
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error updating registrations:", updateError);
+        throw updateError;
+      }
+
+      console.log("Successfully updated registrations to pending_removal");
 
       toast({
         title: "Uitschrijfverzoek verzonden",
