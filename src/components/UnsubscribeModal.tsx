@@ -71,26 +71,31 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
 
       console.log("About to update registrations to pending_removal for:", registrations.map(r => r.id));
 
-      // Update all active registrations to pending_removal status
-      const { data: updateData, error: updateError } = await supabase
-        .from("registrations")
-        .update({ 
-          status: "pending_removal",
-          updated_at: new Date().toISOString()
-        })
-        .eq("email", normalizedEmail)
-        .eq("status", "active")
-        .select("*");
+      // Update each registration individually to ensure proper permissions
+      let successCount = 0;
+      for (const registration of registrations) {
+        const { data: updateData, error: updateError } = await supabase
+          .from("registrations")
+          .update({ 
+            status: "pending_removal",
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", registration.id)
+          .eq("status", "active")
+          .select("*");
 
-      if (updateError) {
-        console.error("Error updating registrations:", updateError);
-        throw updateError;
+        if (updateError) {
+          console.error(`Error updating registration ${registration.id}:`, updateError);
+          // Continue with other registrations even if one fails
+        } else {
+          console.log(`Successfully updated registration ${registration.id}:`, updateData);
+          successCount++;
+        }
       }
 
-      console.log("Update result:", updateData);
-      console.log("Successfully updated", updateData?.length || 0, "registrations to pending_removal");
+      console.log(`Successfully updated ${successCount} of ${registrations.length} registrations to pending_removal`);
 
-      // Verify the update worked
+      // Verify the updates worked
       const { data: verifyData } = await supabase
         .from("registrations")
         .select("id, status")
@@ -98,10 +103,18 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
       
       console.log("Verification - all registrations for this email:", verifyData);
 
-      toast({
-        title: "Uitschrijfverzoek verzonden",
-        description: `Je uitschrijfverzoek voor ${registrations.length} bardienst(en) is verzonden naar de admin voor goedkeuring.`,
-      });
+      if (successCount > 0) {
+        toast({
+          title: "Uitschrijfverzoek verzonden",
+          description: `Je uitschrijfverzoek voor ${successCount} bardienst(en) is verzonden naar de admin voor goedkeuring.`,
+        });
+      } else {
+        toast({
+          title: "Probleem bij uitschrijven",
+          description: "Er is een probleem opgetreden bij het verwerken van je uitschrijfverzoek. Neem contact op met de admin.",
+          variant: "destructive",
+        });
+      }
 
       console.log("=== UNSUBSCRIBE PROCESS COMPLETE ===");
       onClose();
