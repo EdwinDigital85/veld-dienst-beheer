@@ -122,6 +122,10 @@ export type Database = {
         Args: { shift_uuid: string }
         Returns: number
       }
+      is_admin: {
+        Args: { user_email: string }
+        Returns: boolean
+      }
       is_shift_full: {
         Args: { shift_uuid: string }
         Returns: boolean
