@@ -28,7 +28,6 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   const [currentDate, setCurrentDate] = useState(new Date());
   const [shifts, setShifts] = useState<BarShift[]>([]);
   const [registrationCounts, setRegistrationCounts] = useState<Record<string, number>>({});
-  const [registrationNames, setRegistrationNames] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,27 +51,16 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
 
       setShifts(shiftsData || []);
 
-      // Fetch registration counts and names
+      // Fetch registration counts
       const counts: Record<string, number> = {};
-      const names: Record<string, string[]> = {};
       
       for (const shift of shiftsData || []) {
         const { data: countData } = await supabase
           .rpc("get_active_registration_count", { shift_uuid: shift.id });
         counts[shift.id] = countData || 0;
-
-        // Fetch registration names
-        const { data: registrations } = await supabase
-          .from("registrations")
-          .select("name")
-          .eq("shift_id", shift.id)
-          .eq("status", "active");
-        
-        names[shift.id] = registrations?.map(r => r.name) || [];
       }
       
       setRegistrationCounts(counts);
-      setRegistrationNames(names);
     } catch (error) {
       console.error("Error fetching shifts:", error);
     } finally {
@@ -99,12 +87,12 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
     const count = registrationCounts[shift.id] || 0;
     
     if (shift.status === "closed") {
-      return "bg-gray-500";
+      return "bg-gray-400";
     }
     if (shift.status === "full" || count >= shift.max_people) {
-      return "bg-red-500";
+      return "bg-red-400";
     }
-    return "bg-green-500";
+    return "bg-green-400";
   };
 
   const canRegister = (shift: BarShift) => {
@@ -126,7 +114,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
 
   return (
     <Card className="bg-white shadow-lg">
-      <CardHeader className="pb-4 bg-gradient-to-r from-[#0c6be0] to-[#0952b8] text-white rounded-t-lg">
+      <CardHeader className="pb-6 bg-gradient-to-r from-[#0c6be0] to-[#0952b8] text-white rounded-t-lg">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <CardTitle className="text-xl text-white flex items-center">
             <CalendarDays className="h-6 w-6 mr-3" />
@@ -155,19 +143,18 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-4">
+      <CardContent className="p-6">
         {/* Weekday Headers */}
-        <div className="grid grid-cols-7 gap-2 mb-4">
-          {['Maandag', 'Dinsdag', 'Woensdag', 'Donderdag', 'Vrijdag', 'Zaterdag', 'Zondag'].map(day => (
-            <div key={day} className="text-center text-sm font-semibold text-gray-700 p-2 bg-gray-50 rounded">
-              <span className="hidden sm:inline">{day}</span>
-              <span className="sm:hidden">{day.slice(0, 2)}</span>
+        <div className="grid grid-cols-7 gap-1 mb-2">
+          {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
+            <div key={day} className="text-center text-sm font-semibold text-gray-700 p-3 bg-gray-100 rounded">
+              {day}
             </div>
           ))}
         </div>
         
         {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1">
           {days.map((day, index) => {
             const dayShifts = getShiftsForDay(day);
             const isCurrentMonth = isSameMonth(day, currentDate);
@@ -176,15 +163,15 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
             return (
               <div
                 key={index}
-                className={`min-h-[100px] sm:min-h-[120px] p-2 rounded-lg border-2 transition-all ${
+                className={`min-h-[140px] p-2 rounded-lg border transition-all ${
                   isCurrentMonth 
                     ? isCurrentDay 
-                      ? 'bg-blue-50 border-[#0c6be0]' 
+                      ? 'bg-blue-50 border-[#0c6be0] border-2' 
                       : 'bg-white border-gray-200 hover:border-gray-300' 
                     : 'bg-gray-50 border-gray-100'
                 }`}
               >
-                <div className={`text-sm font-semibold mb-2 ${
+                <div className={`text-lg font-bold mb-3 text-center ${
                   isCurrentMonth 
                     ? isCurrentDay 
                       ? 'text-[#0c6be0]' 
@@ -202,30 +189,26 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                     return (
                       <div
                         key={shift.id}
-                        className={`text-xs p-2 rounded-md cursor-pointer border transition-all hover:shadow-md ${
+                        className={`text-xs p-2 rounded cursor-pointer transition-all hover:shadow-sm border ${
                           canRegister(shift)
-                            ? 'bg-green-50 border-green-200 hover:bg-green-100'
+                            ? 'bg-green-50 border-green-300 hover:bg-green-100'
                             : isFull 
-                            ? 'bg-red-50 border-red-200'
-                            : 'bg-gray-50 border-gray-200'
+                            ? 'bg-red-50 border-red-300'
+                            : 'bg-gray-50 border-gray-300'
                         }`}
                         onClick={() => onShiftSelect(shift)}
                       >
-                        <div className="font-semibold truncate mb-1" title={shift.title}>
+                        <div className="font-semibold text-gray-800 mb-1 text-[11px] leading-tight">
                           {shift.title}
                         </div>
-                        <div className="flex items-center gap-1 text-gray-600 mb-1">
-                          <Clock className="h-3 w-3" />
-                          <span className="truncate">
-                            {shift.start_time.slice(0, 5)}
-                          </span>
-                        </div>
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <Users className="h-3 w-3" />
-                            <span className="text-xs">{count}/{shift.max_people}</span>
+                          <div className="text-[10px] text-gray-600">
+                            {shift.start_time.slice(0, 5)}
                           </div>
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(shift)}`}></div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[10px] text-gray-600">{count}/{shift.max_people}</span>
+                            <div className={`w-2 h-2 rounded-full ${getStatusColor(shift)}`}></div>
+                          </div>
                         </div>
                       </div>
                     );
@@ -237,18 +220,18 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
         </div>
 
         {/* Legend */}
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-6 text-sm text-gray-600 bg-gray-50 p-4 rounded-lg">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <div className="w-4 h-4 rounded-full bg-green-400"></div>
             <span>Beschikbaar</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span>Vol/Gesloten</span>
+            <div className="w-4 h-4 rounded-full bg-red-400"></div>
+            <span>Vol</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-            <span>Uitgeschakeld</span>
+            <div className="w-4 h-4 rounded-full bg-gray-400"></div>
+            <span>Gesloten</span>
           </div>
         </div>
 
