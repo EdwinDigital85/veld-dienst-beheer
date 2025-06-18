@@ -1,0 +1,213 @@
+
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { ChevronLeft, ChevronRight, CalendarDays, Clock, Users } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
+import { nl } from "date-fns/locale";
+
+interface BarShift {
+  id: string;
+  title: string;
+  shift_date: string;
+  start_time: string;
+  end_time: string;
+  min_people: number;
+  max_people: number;
+  status: "open" | "full" | "closed";
+}
+
+interface BarShiftCalendarProps {
+  onShiftSelect: (shift: BarShift) => void;
+}
+
+export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProps) {
+  const [currentDate, setCurrentDate] = useState(new Date());
+  const [shifts, setShifts] = useState<BarShift[]>([]);
+  const [registrationCounts, setRegistrationCounts] = useState<Record<string, number>>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchShifts();
+  }, [currentDate]);
+
+  const fetchShifts = async () => {
+    try {
+      const monthStart = startOfMonth(currentDate);
+      const monthEnd = endOfMonth(currentDate);
+
+      const { data: shiftsData, error } = await supabase
+        .from("bar_shifts")
+        .select("*")
+        .gte("shift_date", format(monthStart, "yyyy-MM-dd"))
+        .lte("shift_date", format(monthEnd, "yyyy-MM-dd"))
+        .order("shift_date", { ascending: true })
+        .order("start_time", { ascending: true });
+
+      if (error) throw error;
+
+      setShifts(shiftsData || []);
+
+      // Fetch registration counts
+      const counts: Record<string, number> = {};
+      for (const shift of shiftsData || []) {
+        const { data: countData } = await supabase
+          .rpc("get_active_registration_count", { shift_uuid: shift.id });
+        counts[shift.id] = countData || 0;
+      }
+      setRegistrationCounts(counts);
+    } catch (error) {
+      console.error("Error fetching shifts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getDaysInMonth = () => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    return eachDayOfInterval({ start: monthStart, end: monthEnd });
+  };
+
+  const getShiftsForDay = (day: Date) => {
+    return shifts.filter(shift => 
+      isSameDay(new Date(shift.shift_date), day)
+    );
+  };
+
+  const getStatusBadge = (shift: BarShift) => {
+    const count = registrationCounts[shift.id] || 0;
+    
+    if (shift.status === "closed") {
+      return <Badge variant="destructive" className="text-xs">Gesloten</Badge>;
+    }
+    if (shift.status === "full" || count >= shift.max_people) {
+      return <Badge variant="destructive" className="text-xs">Vol</Badge>;
+    }
+    if (count >= shift.min_people) {
+      return <Badge className="bg-green-500 hover:bg-green-600 text-xs">OK</Badge>;
+    }
+    return <Badge variant="secondary" className="text-xs">Open</Badge>;
+  };
+
+  const canRegister = (shift: BarShift) => {
+    const count = registrationCounts[shift.id] || 0;
+    return shift.status === "open" && count < shift.max_people;
+  };
+
+  const days = getDaysInMonth();
+  const monthName = format(currentDate, "MMMM yyyy", { locale: nl });
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0c6be0] mx-auto"></div>
+        <p className="mt-4 text-gray-600">Kalender laden...</p>
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <CardTitle className="text-xl text-gray-800 flex items-center">
+            <CalendarDays className="h-5 w-5 mr-2 text-[#0c6be0]" />
+            Bardiensten Kalender
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <span className="text-lg font-semibold min-w-[160px] text-center">
+              {monthName}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-7 gap-2 mb-4">
+          {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
+            <div key={day} className="text-center text-sm font-medium text-gray-500 p-2">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        <div className="grid grid-cols-7 gap-2">
+          {days.map((day, index) => {
+            const dayShifts = getShiftsForDay(day);
+            const isCurrentMonth = isSameMonth(day, currentDate);
+            
+            return (
+              <div
+                key={index}
+                className={`min-h-[80px] p-1 border rounded ${
+                  isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                }`}
+              >
+                <div className={`text-sm ${
+                  isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                }`}>
+                  {format(day, 'd')}
+                </div>
+                
+                <div className="space-y-1 mt-1">
+                  {dayShifts.map(shift => {
+                    const count = registrationCounts[shift.id] || 0;
+                    return (
+                      <div
+                        key={shift.id}
+                        className={`text-xs p-1 rounded cursor-pointer border transition-colors ${
+                          canRegister(shift)
+                            ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                            : 'bg-gray-50 border-gray-200'
+                        }`}
+                        onClick={() => onShiftSelect(shift)}
+                      >
+                        <div className="font-medium truncate" title={shift.title}>
+                          {shift.title}
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-600">
+                            {shift.start_time.slice(0, 5)}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <span className="text-gray-600">
+                              {count}/{shift.max_people}
+                            </span>
+                            {getStatusBadge(shift)}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {shifts.length === 0 && (
+          <div className="text-center py-8 text-gray-500">
+            <CalendarDays className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+            <p>Geen bardiensten gepland voor {monthName.toLowerCase()}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
