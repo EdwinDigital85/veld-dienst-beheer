@@ -32,7 +32,9 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
     setLoading(true);
 
     try {
-      console.log("Looking for registrations for email:", email.toLowerCase());
+      const normalizedEmail = email.toLowerCase().trim();
+      console.log("=== UNSUBSCRIBE PROCESS START ===");
+      console.log("Looking for registrations for email:", normalizedEmail);
       
       // Find active registrations for this email
       const { data: registrations, error: fetchError } = await supabase
@@ -40,13 +42,14 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
         .select(`
           id,
           name,
+          status,
           bar_shifts (
             title,
             shift_date,
             start_time
           )
         `)
-        .eq("email", email.toLowerCase())
+        .eq("email", normalizedEmail)
         .eq("status", "active");
 
       if (fetchError) {
@@ -57,6 +60,7 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
       console.log("Found registrations:", registrations);
 
       if (!registrations || registrations.length === 0) {
+        console.log("No active registrations found for email:", normalizedEmail);
         toast({
           title: "Geen inschrijvingen gevonden",
           description: "Er zijn geen actieve inschrijvingen gevonden voor dit emailadres.",
@@ -65,30 +69,41 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
         return;
       }
 
-      console.log("Updating registrations to pending_removal for:", registrations.map(r => r.id));
+      console.log("About to update registrations to pending_removal for:", registrations.map(r => r.id));
 
       // Update all active registrations to pending_removal status
-      const { error: updateError } = await supabase
+      const { data: updateData, error: updateError } = await supabase
         .from("registrations")
         .update({ 
           status: "pending_removal",
           updated_at: new Date().toISOString()
         })
-        .eq("email", email.toLowerCase())
-        .eq("status", "active");
+        .eq("email", normalizedEmail)
+        .eq("status", "active")
+        .select("*");
 
       if (updateError) {
         console.error("Error updating registrations:", updateError);
         throw updateError;
       }
 
-      console.log("Successfully updated registrations to pending_removal");
+      console.log("Update result:", updateData);
+      console.log("Successfully updated", updateData?.length || 0, "registrations to pending_removal");
+
+      // Verify the update worked
+      const { data: verifyData } = await supabase
+        .from("registrations")
+        .select("id, status")
+        .eq("email", normalizedEmail);
+      
+      console.log("Verification - all registrations for this email:", verifyData);
 
       toast({
         title: "Uitschrijfverzoek verzonden",
         description: `Je uitschrijfverzoek voor ${registrations.length} bardienst(en) is verzonden naar de admin voor goedkeuring.`,
       });
 
+      console.log("=== UNSUBSCRIBE PROCESS COMPLETE ===");
       onClose();
     } catch (error) {
       console.error("Error requesting unsubscribe:", error);
