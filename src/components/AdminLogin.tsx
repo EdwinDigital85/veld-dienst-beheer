@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import { validateEmail, sanitizeInput } from "@/utils/inputValidation";
 
 interface AdminLoginProps {
   onClose: () => void;
@@ -16,18 +17,29 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!validateEmail(email)) {
+      newErrors.email = "Vul een geldig emailadres in";
+    }
+
+    if (!password.trim() || password.length < 6) {
+      newErrors.password = "Wachtwoord moet minimaal 6 karakters zijn";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!email.trim() || !password.trim()) {
-      toast({
-        title: "Velden vereist",
-        description: "Vul email en wachtwoord in.",
-        variant: "destructive",
-      });
+    if (!validateForm()) {
       return;
     }
 
@@ -36,21 +48,19 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
     try {
       // Sign in with Supabase Auth
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: sanitizeInput(email.trim()),
         password: password,
       });
 
       if (error) throw error;
 
-      // Check if user is an admin by checking if email exists in admin_users table
-      // We'll use the service role to bypass RLS for this check
+      // Check if user is an admin
       const { data: adminData, error: adminError } = await supabase
         .from("admin_users")
         .select("id, name")
-        .eq("email", email.trim())
+        .eq("email", email.trim().toLowerCase())
         .single();
 
-      // If there's an error or no admin data found
       if (adminError || !adminData) {
         await supabase.auth.signOut();
         toast({
@@ -72,21 +82,33 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
     } catch (error: any) {
       console.error("Login error:", error);
       
+      let errorMessage = "Er is een fout opgetreden.";
+      
       if (error.message.includes("Invalid login credentials")) {
-        toast({
-          title: "Inloggen mislukt",
-          description: "Controleer je email en wachtwoord. Zorg ervoor dat je account bestaat in Supabase Auth.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Inloggen mislukt",
-          description: error.message || "Er is een fout opgetreden.",
-          variant: "destructive",
-        });
+        errorMessage = "Onjuist emailadres of wachtwoord.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Bevestig eerst je emailadres.";
+      } else if (error.message.includes("Too many requests")) {
+        errorMessage = "Te veel inlogpogingen. Probeer het later opnieuw.";
       }
+      
+      toast({
+        title: "Inloggen mislukt",
+        description: errorMessage,
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    if (field === "email") setEmail(value);
+    if (field === "password") setPassword(value);
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -104,11 +126,13 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="admin@voetbalclub.nl"
               required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+              maxLength={100}
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.email ? 'border-red-500' : ''}`}
             />
+            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
@@ -117,11 +141,14 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => handleInputChange("password", e.target.value)}
               placeholder="••••••••"
               required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+              minLength={6}
+              maxLength={128}
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.password ? 'border-red-500' : ''}`}
             />
+            {errors.password && <p className="text-sm text-red-500">{errors.password}</p>}
           </div>
 
           <div className="flex gap-3 pt-4">

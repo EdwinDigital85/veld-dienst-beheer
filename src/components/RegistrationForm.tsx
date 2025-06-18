@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CalendarDays, Users } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
+import { validateEmail, validatePhone, validateName, sanitizeInput } from "@/utils/inputValidation";
 
 interface BarShift {
   id: string;
@@ -36,26 +37,35 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   });
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!validateName(formData.name)) {
+      newErrors.name = "Naam moet tussen 2-50 karakters zijn en alleen letters bevatten";
+    }
+
+    if (!validateEmail(formData.email)) {
+      newErrors.email = "Vul een geldig emailadres in";
+    }
+
+    if (!validatePhone(formData.phone)) {
+      newErrors.phone = "Vul een geldig Nederlands telefoonnummer in";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name.trim() || !formData.email.trim() || !formData.phone.trim()) {
+    if (!validateForm()) {
       toast({
-        title: "Velden vereist",
-        description: "Vul alle velden in om je in te schrijven.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      toast({
-        title: "Ongeldig emailadres",
-        description: "Vul een geldig emailadres in.",
+        title: "Validatie fouten",
+        description: "Controleer de ingevoerde gegevens",
         variant: "destructive",
       });
       return;
@@ -97,14 +107,14 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
         return;
       }
 
-      // Register the user
+      // Register the user with sanitized input
       const { error } = await supabase
         .from("registrations")
         .insert({
           shift_id: shift.id,
-          name: formData.name.trim(),
+          name: sanitizeInput(formData.name),
           email: formData.email.toLowerCase().trim(),
-          phone: formData.phone.trim(),
+          phone: formData.phone.replace(/[\s-]/g, ''), // Clean phone format
         });
 
       if (error) throw error;
@@ -129,6 +139,10 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
   };
 
   const generateCalendarEvent = () => {
@@ -241,8 +255,10 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
               onChange={(e) => handleInputChange("name", e.target.value)}
               placeholder="Je voor- en achternaam"
               required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+              maxLength={50}
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.name ? 'border-red-500' : ''}`}
             />
+            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
           </div>
 
           <div className="space-y-2">
@@ -254,8 +270,10 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
               onChange={(e) => handleInputChange("email", e.target.value)}
               placeholder="je@email.nl"
               required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+              maxLength={100}
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.email ? 'border-red-500' : ''}`}
             />
+            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
           </div>
 
           <div className="space-y-2">
@@ -267,8 +285,10 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
               onChange={(e) => handleInputChange("phone", e.target.value)}
               placeholder="06-12345678"
               required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+              maxLength={15}
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.phone ? 'border-red-500' : ''}`}
             />
+            {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
           </div>
 
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">

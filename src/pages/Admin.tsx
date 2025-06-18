@@ -1,97 +1,68 @@
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogOut, Plus } from "lucide-react";
+import { LogOut, Plus, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminShifts from "@/components/AdminShifts";
 import AdminRegistrations from "@/components/AdminRegistrations";
 import CreateShiftForm from "@/components/CreateShiftForm";
 
 export default function Admin() {
-  const [user, setUser] = useState<any>(null);
-  const [adminData, setAdminData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { adminData, isLoading, isAuthenticated, isAdmin, logout } = useAdminAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Security: Redirect non-admin users
   useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        navigate("/");
-        return;
-      }
-
-      setUser(session.user);
-
-      // Check if user is admin - try to get admin data
-      try {
-        const { data: adminData, error } = await supabase
-          .from("admin_users")
-          .select("*")
-          .eq("email", session.user.email)
-          .single();
-
-        if (error) {
-          console.error("Admin check error:", error);
-          toast({
-            title: "Geen toegang",
-            description: "Je hebt geen admin rechten of er is een probleem met de database.",
-            variant: "destructive",
-          });
-          navigate("/");
-          return;
-        }
-
-        if (!adminData) {
-          toast({
-            title: "Geen toegang",
-            description: "Je hebt geen admin rechten.",
-            variant: "destructive",
-          });
-          navigate("/");
-          return;
-        }
-
-        setAdminData(adminData);
-      } catch (error) {
-        console.error("Admin verification error:", error);
-        toast({
-          title: "Fout bij verificatie",
-          description: "Er is een probleem opgetreden bij het controleren van admin rechten.",
-          variant: "destructive",
-        });
-        navigate("/");
-        return;
-      }
-    } catch (error) {
-      console.error("Auth check error:", error);
-      navigate("/");
-    } finally {
-      setLoading(false);
+    if (!isLoading && (!isAuthenticated || !isAdmin)) {
+      toast({
+        title: "Geen toegang",
+        description: "Je hebt geen admin rechten om deze pagina te bekijken.",
+        variant: "destructive",
+      });
     }
+  }, [isLoading, isAuthenticated, isAdmin, toast]);
+
+  const handleCreateShift = () => {
+    if (!isAdmin) {
+      toast({
+        title: "Geen toegang",
+        description: "Alleen admins kunnen bardiensten aanmaken.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowCreateForm(true);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0c6be0] mx-auto"></div>
-          <p className="mt-4 text-gray-600">Laden...</p>
+          <p className="mt-4 text-gray-600">Admin verificatie...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !isAdmin) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Geen toegang</h1>
+          <p className="text-gray-600 mb-4">
+            Je hebt geen admin rechten om deze pagina te bekijken.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/'}
+            className="bg-[#0c6be0] hover:bg-[#0952b8]"
+          >
+            Terug naar hoofdpagina
+          </Button>
         </div>
       </div>
     );
@@ -111,7 +82,7 @@ export default function Admin() {
             </div>
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
-                onClick={() => setShowCreateForm(true)}
+                onClick={handleCreateShift}
                 className="bg-white text-[#0c6be0] hover:bg-gray-100 text-sm"
                 size="sm"
               >
@@ -119,7 +90,7 @@ export default function Admin() {
                 Nieuwe Bardienst
               </Button>
               <Button
-                onClick={handleLogout}
+                onClick={logout}
                 variant="outline"
                 className="bg-transparent border-white text-white hover:bg-white hover:text-[#0c6be0] text-sm"
                 size="sm"

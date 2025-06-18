@@ -7,6 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { 
+  validateShiftTitle, 
+  validateShiftTime, 
+  validateShiftDate, 
+  validatePeopleCount,
+  sanitizeInput 
+} from "@/utils/inputValidation";
 
 interface CreateShiftFormProps {
   onClose: () => void;
@@ -14,6 +22,7 @@ interface CreateShiftFormProps {
 }
 
 export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormProps) {
+  const { isAdmin, isLoading } = useAdminAuth();
   const [formData, setFormData] = useState({
     title: "",
     shift_date: "",
@@ -24,47 +33,80 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
     remarks: "",
   });
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+
+  // Security check: Only allow admins to access this form
+  if (isLoading) {
+    return (
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-lg">
+          <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0c6be0]"></div>
+            <span className="ml-3">Verificatie...</span>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Geen toegang</DialogTitle>
+          </DialogHeader>
+          <div className="p-4">
+            <p className="text-gray-600 mb-4">
+              Je hebt geen admin rechten om bardiensten aan te maken.
+            </p>
+            <Button onClick={onClose} className="w-full">
+              Sluiten
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    // Validate title
+    if (!validateShiftTitle(formData.title)) {
+      newErrors.title = "Titel moet tussen 3 en 100 karakters zijn";
+    }
+
+    // Validate date
+    if (!validateShiftDate(formData.shift_date)) {
+      newErrors.shift_date = "Datum moet in de toekomst liggen";
+    }
+
+    // Validate times
+    if (!validateShiftTime(formData.start_time, formData.end_time)) {
+      newErrors.time = "Starttijd moet voor eindtijd liggen";
+    }
+
+    // Validate people counts
+    const minPeople = parseInt(formData.min_people);
+    const maxPeople = parseInt(formData.max_people);
+    
+    if (!validatePeopleCount(minPeople, maxPeople)) {
+      newErrors.people = "Minimum moet tussen 1-50 zijn en kleiner dan maximum";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validation
-    if (!formData.title.trim() || !formData.shift_date || !formData.start_time || 
-        !formData.end_time || !formData.min_people || !formData.max_people) {
+    if (!validateForm()) {
       toast({
-        title: "Velden vereist",
-        description: "Vul alle verplichte velden in.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const minPeople = parseInt(formData.min_people);
-    const maxPeople = parseInt(formData.max_people);
-
-    if (minPeople < 1 || maxPeople < 1) {
-      toast({
-        title: "Ongeldige waarden",
-        description: "Minimum en maximum aantal personen moet minimaal 1 zijn.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (minPeople > maxPeople) {
-      toast({
-        title: "Ongeldige waarden",
-        description: "Minimum aantal personen kan niet groter zijn dan maximum.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.start_time >= formData.end_time) {
-      toast({
-        title: "Ongeldige tijden",
-        description: "Starttijd moet voor eindtijd liggen.",
+        title: "Validatie fouten",
+        description: "Controleer de ingevoerde gegevens",
         variant: "destructive",
       });
       return;
@@ -76,13 +118,13 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
       const { error } = await supabase
         .from("bar_shifts")
         .insert({
-          title: formData.title.trim(),
+          title: sanitizeInput(formData.title),
           shift_date: formData.shift_date,
           start_time: formData.start_time,
           end_time: formData.end_time,
-          min_people: minPeople,
-          max_people: maxPeople,
-          remarks: formData.remarks.trim() || null,
+          min_people: parseInt(formData.min_people),
+          max_people: parseInt(formData.max_people),
+          remarks: formData.remarks.trim() ? sanitizeInput(formData.remarks) : null,
         });
 
       if (error) throw error;
@@ -107,6 +149,10 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
+    }
   };
 
   return (
@@ -126,8 +172,10 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
               onChange={(e) => handleInputChange("title", e.target.value)}
               placeholder="Bijv. Bardienst Thuiswedstrijd"
               required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+              maxLength={100}
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.title ? 'border-red-500' : ''}`}
             />
+            {errors.title && <p className="text-sm text-red-500">{errors.title}</p>}
           </div>
 
           <div className="space-y-2">
@@ -138,8 +186,9 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
               value={formData.shift_date}
               onChange={(e) => handleInputChange("shift_date", e.target.value)}
               required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.shift_date ? 'border-red-500' : ''}`}
             />
+            {errors.shift_date && <p className="text-sm text-red-500">{errors.shift_date}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -151,7 +200,7 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
                 value={formData.start_time}
                 onChange={(e) => handleInputChange("start_time", e.target.value)}
                 required
-                className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+                className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.time ? 'border-red-500' : ''}`}
               />
             </div>
             <div className="space-y-2">
@@ -162,9 +211,10 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
                 value={formData.end_time}
                 onChange={(e) => handleInputChange("end_time", e.target.value)}
                 required
-                className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+                className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.time ? 'border-red-500' : ''}`}
               />
             </div>
+            {errors.time && <p className="text-sm text-red-500 col-span-2">{errors.time}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -174,11 +224,12 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
                 id="min_people"
                 type="number"
                 min="1"
+                max="50"
                 value={formData.min_people}
                 onChange={(e) => handleInputChange("min_people", e.target.value)}
                 placeholder="2"
                 required
-                className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+                className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.people ? 'border-red-500' : ''}`}
               />
             </div>
             <div className="space-y-2">
@@ -187,13 +238,15 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
                 id="max_people"
                 type="number"
                 min="1"
+                max="50"
                 value={formData.max_people}
                 onChange={(e) => handleInputChange("max_people", e.target.value)}
                 placeholder="4"
                 required
-                className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+                className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.people ? 'border-red-500' : ''}`}
               />
             </div>
+            {errors.people && <p className="text-sm text-red-500 col-span-2">{errors.people}</p>}
           </div>
 
           <div className="space-y-2">
@@ -204,6 +257,7 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
               onChange={(e) => handleInputChange("remarks", e.target.value)}
               placeholder="Bijv. Ervaring met kassasysteem gewenst"
               rows={3}
+              maxLength={500}
               className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
             />
           </div>
