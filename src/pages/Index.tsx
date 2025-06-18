@@ -132,17 +132,18 @@ export default function Index() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-[#0c6be0] text-white shadow-lg">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="flex justify-between items-center">
+        <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-              <h1 className="text-3xl font-bold">Bardiensten</h1>
-              <p className="text-blue-100 mt-1">Voetbalclub - Vrijwilligersrooster</p>
+              <h1 className="text-2xl sm:text-3xl font-bold">Bardiensten</h1>
+              <p className="text-blue-100 mt-1 text-sm sm:text-base">Voetbalclub - Vrijwilligersrooster</p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
               <Button
                 variant="outline"
                 onClick={() => setShowUnsubscribe(true)}
-                className="bg-orange-600 text-white border-orange-600 hover:bg-orange-700 hover:border-orange-700"
+                className="bg-orange-600 text-white border-orange-600 hover:bg-orange-700 hover:border-orange-700 text-sm"
+                size="sm"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Uitschrijven
@@ -150,7 +151,8 @@ export default function Index() {
               <Button
                 variant="outline"
                 onClick={() => setShowAdminLogin(true)}
-                className="bg-white text-[#0c6be0] hover:bg-gray-100 border-white"
+                className="bg-white text-[#0c6be0] hover:bg-gray-100 border-white text-sm"
+                size="sm"
               >
                 Admin Login
               </Button>
@@ -160,11 +162,11 @@ export default function Index() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-6xl mx-auto px-4 py-8">
+      <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
         <Tabs defaultValue="calendar" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="calendar">Kalender Overzicht</TabsTrigger>
-            <TabsTrigger value="list">Lijst Weergave</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-sm">Kalender Overzicht</TabsTrigger>
+            <TabsTrigger value="list" className="text-sm">Lijst Weergave</TabsTrigger>
           </TabsList>
 
           <TabsContent value="calendar" className="space-y-6">
@@ -179,7 +181,7 @@ export default function Index() {
                 <p className="text-gray-500">Er zijn momenteel geen bardiensten gepland.</p>
               </div>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                 {barShifts.map((shift) => {
                   const count = registrationCounts[shift.id] || 0;
                   const names = registrationNames[shift.id] || [];
@@ -191,28 +193,32 @@ export default function Index() {
                     <Card key={shift.id} className={`hover:shadow-lg transition-shadow border-l-4 ${
                       isFull ? 'border-l-red-500 bg-red-50/30' : 'border-l-[#0c6be0]'
                     }`}>
-                      <CardHeader>
-                        <div className="flex justify-between items-start">
-                          <CardTitle className="text-lg text-gray-800">{shift.title}</CardTitle>
+                      <CardHeader className="pb-4">
+                        <div className="flex justify-between items-start gap-2">
+                          <CardTitle className="text-base sm:text-lg text-gray-800 leading-tight">{shift.title}</CardTitle>
                           {getStatusBadge(shift)}
                         </div>
                         <CardDescription className="space-y-2">
                           <div className="flex items-center text-sm text-gray-600">
-                            <CalendarDays className="h-4 w-4 mr-2" />
-                            {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
+                            <CalendarDays className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span className="text-xs sm:text-sm">
+                              {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
+                            </span>
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
-                            <Users className="h-4 w-4 mr-2" />
-                            {shift.start_time} - {shift.end_time}
+                            <Users className="h-4 w-4 mr-2 flex-shrink-0" />
+                            <span className="text-xs sm:text-sm">
+                              {shift.start_time} - {shift.end_time}
+                            </span>
                           </div>
                         </CardDescription>
                       </CardHeader>
-                      <CardContent className="space-y-4">
+                      <CardContent className="space-y-4 pt-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center text-sm">
-                            <Users className="h-4 w-4 mr-2 text-[#0c6be0]" />
-                            <span className="font-medium">
-                              {count}/{shift.max_people} personen ingeschreven
+                            <Users className="h-4 w-4 mr-2 text-[#0c6be0] flex-shrink-0" />
+                            <span className="font-medium text-xs sm:text-sm">
+                              {count}/{shift.max_people} personen
                               {isFull && <span className="text-red-600 ml-2">(VOL)</span>}
                             </span>
                           </div>
@@ -220,27 +226,28 @@ export default function Index() {
 
                         {names.length > 0 && (
                           <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                            <p className="font-medium mb-1">Ingeschreven:</p>
-                            <p>{names.join(', ')}</p>
+                            <p className="font-medium mb-1 text-xs sm:text-sm">Ingeschreven:</p>
+                            <p className="text-xs sm:text-sm">{names.join(', ')}</p>
                           </div>
                         )}
 
                         {shift.remarks && (
                           <div className="flex items-start text-sm text-gray-600 bg-yellow-50 p-3 rounded">
                             <MessageSquare className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
-                            <p>{shift.remarks}</p>
+                            <p className="text-xs sm:text-sm">{shift.remarks}</p>
                           </div>
                         )}
 
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                           <Button
                             onClick={() => setSelectedShift(shift)}
                             disabled={!isAvailable}
-                            className={`flex-1 ${
+                            className={`flex-1 text-sm ${
                               isAvailable 
                                 ? "bg-[#0c6be0] hover:bg-[#0952b8]" 
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
                             }`}
+                            size="sm"
                           >
                             {isFull ? "Vol - Niet beschikbaar" : 
                              shift.status === "closed" ? "Gesloten" : 
@@ -250,7 +257,7 @@ export default function Index() {
                             variant="outline"
                             size="sm"
                             onClick={() => generateCalendarEvent(shift)}
-                            className="whitespace-nowrap"
+                            className="whitespace-nowrap text-sm"
                           >
                             + Agenda
                           </Button>

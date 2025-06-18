@@ -101,7 +101,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
     if (shift.status === "full" || count >= shift.max_people) {
       return <Badge variant="destructive" className="text-xs">Vol ({count}/{shift.max_people})</Badge>;
     }
-    return <Badge variant="secondary" className="text-xs">{count}/{shift.max_people} personen</Badge>;
+    return <Badge variant="secondary" className="text-xs">{count}/{shift.max_people}</Badge>;
   };
 
   const canRegister = (shift: BarShift) => {
@@ -124,42 +124,44 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   return (
     <Card>
       <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl text-gray-800 flex items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <CardTitle className="text-lg sm:text-xl text-gray-800 flex items-center">
             <CalendarDays className="h-5 w-5 mr-2 text-[#0c6be0]" />
             Bardiensten Kalender
           </CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentDate(subMonths(currentDate, 1))}
+              className="px-2 sm:px-3"
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-lg font-semibold min-w-[160px] text-center">
+            <span className="text-base sm:text-lg font-semibold min-w-[140px] sm:min-w-[160px] text-center">
               {monthName}
             </span>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+              className="px-2 sm:px-3"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-2 mb-4">
+      <CardContent className="p-2 sm:p-6">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-2 sm:mb-4">
           {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map(day => (
-            <div key={day} className="text-center text-sm font-medium text-gray-500 p-2">
+            <div key={day} className="text-center text-xs sm:text-sm font-medium text-gray-500 p-1 sm:p-2">
               {day}
             </div>
           ))}
         </div>
         
-        <div className="grid grid-cols-7 gap-2">
+        <div className="grid grid-cols-7 gap-1 sm:gap-2">
           {days.map((day, index) => {
             const dayShifts = getShiftsForDay(day);
             const isCurrentMonth = isSameMonth(day, currentDate);
@@ -167,11 +169,11 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
             return (
               <div
                 key={index}
-                className={`min-h-[120px] p-1 border rounded ${
+                className={`min-h-[80px] sm:min-h-[120px] p-1 border rounded ${
                   isCurrentMonth ? 'bg-white' : 'bg-gray-50'
                 }`}
               >
-                <div className={`text-sm ${
+                <div className={`text-xs sm:text-sm ${
                   isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
                 }`}>
                   {format(day, 'd')}
@@ -186,7 +188,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                     return (
                       <div
                         key={shift.id}
-                        className={`text-xs p-2 rounded cursor-pointer border transition-colors ${
+                        className={`text-xs p-1 sm:p-2 rounded cursor-pointer border transition-colors ${
                           canRegister(shift)
                             ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
                             : isFull 
@@ -195,23 +197,23 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                         }`}
                         onClick={() => onShiftSelect(shift)}
                       >
-                        <div className="font-medium truncate mb-1" title={shift.title}>
+                        <div className="font-medium truncate mb-1 text-xs" title={shift.title}>
                           {shift.title}
                         </div>
-                        <div className="text-gray-600 mb-1">
+                        <div className="text-gray-600 mb-1 text-xs">
                           {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
                         </div>
                         <div className="flex items-center gap-1 mb-1">
-                          <Users className="h-3 w-3" />
+                          <Users className="h-2 w-2 sm:h-3 sm:w-3" />
                           {getStatusBadge(shift)}
                         </div>
                         {names.length > 0 && (
-                          <div className="text-xs text-gray-500 truncate" title={names.join(', ')}>
+                          <div className="text-xs text-gray-500 truncate hidden sm:block" title={names.join(', ')}>
                             {names.join(', ')}
                           </div>
                         )}
                         {!canRegister(shift) && isFull && (
-                          <div className="text-xs text-red-600 font-medium mt-1">
+                          <div className="text-xs text-red-600 font-medium mt-1 hidden sm:block">
                             Niet beschikbaar
                           </div>
                         )}
@@ -227,7 +229,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
         {shifts.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             <CalendarDays className="h-12 w-12 mx-auto mb-2 text-gray-300" />
-            <p>Geen bardiensten gepland voor {monthName.toLowerCase()}</p>
+            <p className="text-sm sm:text-base">Geen bardiensten gepland voor {monthName.toLowerCase()}</p>
           </div>
         )}
       </CardContent>
