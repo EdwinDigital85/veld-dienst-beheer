@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ interface Registration {
   phone: string;
   status: "active" | "pending_removal";
   created_at: string;
+  updated_at: string;
   shift_id: string;
   bar_shifts: {
     title: string;
@@ -33,16 +35,46 @@ export default function AdminRegistrations() {
 
   useEffect(() => {
     fetchRegistrations();
+    
+    // Set up real-time subscription for registration changes
+    const channel = supabase
+      .channel('registration-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'registrations'
+        },
+        () => {
+          console.log('Registration change detected, refreshing...');
+          fetchRegistrations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchRegistrations = async () => {
     setLoading(true);
     try {
       console.log("=== ADMIN FETCH START ===");
+      
+      // Use a more direct query approach to avoid caching issues
       const { data, error } = await supabase
         .from("registrations")
         .select(`
-          *,
+          id,
+          name,
+          email,
+          phone,
+          status,
+          created_at,
+          updated_at,
+          shift_id,
           bar_shifts (
             title,
             shift_date,
@@ -50,7 +82,7 @@ export default function AdminRegistrations() {
             end_time
           )
         `)
-        .order("created_at", { ascending: false });
+        .order("updated_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching registrations:", error);
@@ -59,7 +91,12 @@ export default function AdminRegistrations() {
 
       console.log("=== RAW ADMIN DATA ===");
       console.log("Total registrations found:", data?.length);
-      console.log("All registrations with status:", data?.map(r => ({ id: r.id, email: r.email, status: r.status })));
+      console.log("All registrations with detailed status:", data?.map(r => ({ 
+        id: r.id, 
+        email: r.email, 
+        status: r.status,
+        updated_at: r.updated_at 
+      })));
       
       const pendingRemovalCount = data?.filter(r => r.status === "pending_removal").length || 0;
       const activeCount = data?.filter(r => r.status === "active").length || 0;
@@ -67,6 +104,12 @@ export default function AdminRegistrations() {
       console.log("Status breakdown:");
       console.log("- Active:", activeCount);
       console.log("- Pending removal:", pendingRemovalCount);
+      
+      // Show detailed status for debugging
+      data?.forEach(reg => {
+        console.log(`Registration ${reg.id}: status="${reg.status}", updated_at="${reg.updated_at}"`);
+      });
+      
       console.log("=== END RAW ADMIN DATA ===");
 
       setRegistrations(data || []);
@@ -91,8 +134,9 @@ export default function AdminRegistrations() {
     
     if (statusFilter === "pending_removal") {
       filtered = registrations.filter(reg => {
-        console.log(`Registration ${reg.id} (${reg.email}): status = "${reg.status}"`);
-        return reg.status === "pending_removal";
+        const isPending = reg.status === "pending_removal";
+        console.log(`Registration ${reg.id} (${reg.email}): status = "${reg.status}", isPending = ${isPending}`);
+        return isPending;
       });
       console.log("Filtered pending_removal registrations:", filtered.length);
     } else if (statusFilter === "active") {
@@ -135,7 +179,10 @@ export default function AdminRegistrations() {
     try {
       const { error } = await supabase
         .from("registrations")
-        .update({ status: "active" })
+        .update({ 
+          status: "active",
+          updated_at: new Date().toISOString()
+        })
         .eq("id", registrationId);
 
       if (error) throw error;
@@ -223,7 +270,7 @@ export default function AdminRegistrations() {
             )}
           </p>
           <div className="text-sm text-gray-500 mt-1">
-            Debug: Actief={activeCount}, Pending={pendingCount}, Filter={statusFilter}
+            Debug: Actief={activeCount}, Pending={pendingCount}, Filter={statusFilter}, Gefilterd={filteredRegistrations.length}
           </div>
         </div>
         
@@ -336,6 +383,11 @@ export default function AdminRegistrations() {
 
                   <div className="text-xs text-gray-500">
                     Ingeschreven op: {format(new Date(registration.created_at), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
+                    {registration.updated_at !== registration.created_at && (
+                      <span className="ml-2">
+                        • Laatst gewijzigd: {format(new Date(registration.updated_at), "d MMMM yyyy 'om' HH:mm", { locale: nl })}
+                      </span>
+                    )}
                   </div>
 
                   {registration.status === "pending_removal" ? (
