@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,7 +38,7 @@ export default function AdminRegistrations() {
   const fetchRegistrations = async () => {
     setLoading(true);
     try {
-      console.log("Fetching registrations...");
+      console.log("=== ADMIN FETCH START ===");
       const { data, error } = await supabase
         .from("registrations")
         .select(`
@@ -58,7 +57,18 @@ export default function AdminRegistrations() {
         throw error;
       }
 
-      console.log("Raw fetched registrations:", data);
+      console.log("=== RAW ADMIN DATA ===");
+      console.log("Total registrations found:", data?.length);
+      console.log("All registrations with status:", data?.map(r => ({ id: r.id, email: r.email, status: r.status })));
+      
+      const pendingRemovalCount = data?.filter(r => r.status === "pending_removal").length || 0;
+      const activeCount = data?.filter(r => r.status === "active").length || 0;
+      
+      console.log("Status breakdown:");
+      console.log("- Active:", activeCount);
+      console.log("- Pending removal:", pendingRemovalCount);
+      console.log("=== END RAW ADMIN DATA ===");
+
       setRegistrations(data || []);
     } catch (error) {
       console.error("Error fetching registrations:", error);
@@ -73,19 +83,26 @@ export default function AdminRegistrations() {
   };
 
   const getFilteredRegistrations = () => {
-    console.log("Filtering registrations with filter:", statusFilter);
-    console.log("All registrations:", registrations);
+    console.log("=== FILTERING START ===");
+    console.log("Current filter:", statusFilter);
+    console.log("Total registrations:", registrations.length);
     
     let filtered = registrations;
     
     if (statusFilter === "pending_removal") {
-      filtered = registrations.filter(reg => reg.status === "pending_removal");
+      filtered = registrations.filter(reg => {
+        console.log(`Registration ${reg.id} (${reg.email}): status = "${reg.status}"`);
+        return reg.status === "pending_removal";
+      });
+      console.log("Filtered pending_removal registrations:", filtered.length);
     } else if (statusFilter === "active") {
       filtered = registrations.filter(reg => reg.status === "active");
+      console.log("Filtered active registrations:", filtered.length);
     }
     // "all" shows everything
 
-    console.log("Filtered registrations:", filtered);
+    console.log("Final filtered result count:", filtered.length);
+    console.log("=== FILTERING END ===");
     return filtered;
   };
 
@@ -205,6 +222,9 @@ export default function AdminRegistrations() {
               </span>
             )}
           </p>
+          <div className="text-sm text-gray-500 mt-1">
+            Debug: Actief={activeCount}, Pending={pendingCount}, Filter={statusFilter}
+          </div>
         </div>
         
         <div className="flex gap-2 w-full sm:w-auto">
@@ -263,6 +283,9 @@ export default function AdminRegistrations() {
               : "Er zijn nog geen inschrijvingen voor bardiensten."
             }
           </p>
+          <div className="text-xs text-gray-400 mt-2">
+            Debug: Showing {filteredRegistrations.length} of {registrations.length} registrations (filter: {statusFilter})
+          </div>
         </div>
       ) : (
         <div className="grid gap-4">
