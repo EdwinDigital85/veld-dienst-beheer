@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, CalendarDays, Clock, Users } from "lucide-react";
+import { ChevronLeft, ChevronRight, CalendarDays, Users } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
 import { nl } from "date-fns/locale";
 
@@ -16,6 +16,7 @@ interface BarShift {
   end_time: string;
   min_people: number;
   max_people: number;
+  remarks: string | null;
   status: "open" | "full" | "closed";
 }
 
@@ -27,6 +28,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   const [currentDate, setCurrentDate] = useState(new Date());
   const [shifts, setShifts] = useState<BarShift[]>([]);
   const [registrationCounts, setRegistrationCounts] = useState<Record<string, number>>({});
+  const [registrationNames, setRegistrationNames] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -50,14 +52,27 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
 
       setShifts(shiftsData || []);
 
-      // Fetch registration counts
+      // Fetch registration counts and names
       const counts: Record<string, number> = {};
+      const names: Record<string, string[]> = {};
+      
       for (const shift of shiftsData || []) {
         const { data: countData } = await supabase
           .rpc("get_active_registration_count", { shift_uuid: shift.id });
         counts[shift.id] = countData || 0;
+
+        // Fetch registration names
+        const { data: registrations } = await supabase
+          .from("registrations")
+          .select("name")
+          .eq("shift_id", shift.id)
+          .eq("status", "active");
+        
+        names[shift.id] = registrations?.map(r => r.name) || [];
       }
+      
       setRegistrationCounts(counts);
+      setRegistrationNames(names);
     } catch (error) {
       console.error("Error fetching shifts:", error);
     } finally {
@@ -86,10 +101,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
     if (shift.status === "full" || count >= shift.max_people) {
       return <Badge variant="destructive" className="text-xs">Vol</Badge>;
     }
-    if (count >= shift.min_people) {
-      return <Badge className="bg-green-500 hover:bg-green-600 text-xs">OK</Badge>;
-    }
-    return <Badge variant="secondary" className="text-xs">Open</Badge>;
+    return <Badge variant="secondary" className="text-xs">{count} personen</Badge>;
   };
 
   const canRegister = (shift: BarShift) => {
@@ -155,7 +167,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
             return (
               <div
                 key={index}
-                className={`min-h-[80px] p-1 border rounded ${
+                className={`min-h-[120px] p-1 border rounded ${
                   isCurrentMonth ? 'bg-white' : 'bg-gray-50'
                 }`}
               >
@@ -168,30 +180,35 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                 <div className="space-y-1 mt-1">
                   {dayShifts.map(shift => {
                     const count = registrationCounts[shift.id] || 0;
+                    const names = registrationNames[shift.id] || [];
                     return (
                       <div
                         key={shift.id}
-                        className={`text-xs p-1 rounded cursor-pointer border transition-colors ${
+                        className={`text-xs p-2 rounded cursor-pointer border transition-colors ${
                           canRegister(shift)
                             ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
                             : 'bg-gray-50 border-gray-200'
                         }`}
                         onClick={() => onShiftSelect(shift)}
                       >
-                        <div className="font-medium truncate" title={shift.title}>
+                        <div className="font-medium truncate mb-1" title={shift.title}>
                           {shift.title}
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-gray-600">
-                            {shift.start_time.slice(0, 5)}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <span className="text-gray-600">
-                              {count}/{shift.max_people}
-                            </span>
-                            {getStatusBadge(shift)}
-                          </div>
+                        <div className="text-gray-600 mb-1">
+                          {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
                         </div>
+                        <div className="flex items-center gap-1 mb-1">
+                          <Users className="h-3 w-3" />
+                          <span className="text-gray-600">
+                            {count} personen
+                          </span>
+                          {getStatusBadge(shift)}
+                        </div>
+                        {names.length > 0 && (
+                          <div className="text-xs text-gray-500 truncate" title={names.join(', ')}>
+                            {names.join(', ')}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

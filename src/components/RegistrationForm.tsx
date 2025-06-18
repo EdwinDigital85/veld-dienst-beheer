@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Clock, Users } from "lucide-react";
+import { CalendarDays, Users } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 
@@ -35,6 +35,7 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
     phone: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -113,7 +114,7 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
         description: "Je bent succesvol ingeschreven voor de bardienst.",
       });
 
-      onSuccess();
+      setShowSuccess(true);
     } catch (error) {
       console.error("Error registering:", error);
       toast({
@@ -130,7 +131,79 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const generateCalendarEvent = () => {
+    const startDateTime = new Date(`${shift.shift_date}T${shift.start_time}`);
+    const endDateTime = new Date(`${shift.shift_date}T${shift.end_time}`);
+    
+    const formatDateTime = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const title = encodeURIComponent(shift.title);
+    const details = encodeURIComponent(`Bardienst: ${shift.title}`);
+    const location = encodeURIComponent("Voetbalclub");
+    
+    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatDateTime(startDateTime)}/${formatDateTime(endDateTime)}&details=${details}&location=${location}`;
+    
+    window.open(googleUrl, '_blank');
+  };
+
+  const handleFinish = () => {
+    onSuccess();
+    onClose();
+  };
+
   const shiftDate = new Date(shift.shift_date);
+
+  if (showSuccess) {
+    return (
+      <Dialog open={true} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-green-600">Inschrijving succesvol!</DialogTitle>
+            <DialogDescription>
+              Je bent succesvol ingeschreven voor de bardienst.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="bg-green-50 p-4 rounded-lg space-y-2">
+            <h3 className="font-semibold text-gray-800">{shift.title}</h3>
+            <div className="flex items-center text-sm text-gray-600">
+              <CalendarDays className="h-4 w-4 mr-2" />
+              {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
+            </div>
+            <div className="flex items-center text-sm text-gray-600">
+              <Users className="h-4 w-4 mr-2" />
+              {shift.start_time} - {shift.end_time}
+            </div>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-sm text-blue-800 mb-3">
+              <strong>Wil je deze bardienst toevoegen aan je agenda?</strong>
+            </p>
+            <Button
+              onClick={generateCalendarEvent}
+              className="w-full bg-blue-600 hover:bg-blue-700"
+            >
+              <CalendarDays className="h-4 w-4 mr-2" />
+              Toevoegen aan Google Agenda
+            </Button>
+          </div>
+
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p className="text-sm text-yellow-800">
+              <strong>Let op:</strong> Je ontvangt een week voor de bardienst een herinnering via email.
+            </p>
+          </div>
+
+          <Button onClick={handleFinish} className="w-full">
+            Sluiten
+          </Button>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -150,12 +223,8 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
             {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
           </div>
           <div className="flex items-center text-sm text-gray-600">
-            <Clock className="h-4 w-4 mr-2" />
-            {shift.start_time} - {shift.end_time}
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
             <Users className="h-4 w-4 mr-2" />
-            Minimaal {shift.min_people} personen, maximaal {shift.max_people}
+            {shift.start_time} - {shift.end_time}
           </div>
           {shift.remarks && (
             <p className="text-sm text-gray-600 italic">{shift.remarks}</p>

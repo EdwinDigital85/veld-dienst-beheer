@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, Clock, Users, MessageSquare, LogOut } from "lucide-react";
+import { CalendarDays, Users, MessageSquare, LogOut } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import RegistrationForm from "@/components/RegistrationForm";
@@ -31,6 +31,7 @@ export default function Index() {
   const [showAdminLogin, setShowAdminLogin] = useState(false);
   const [showUnsubscribe, setShowUnsubscribe] = useState(false);
   const [registrationCounts, setRegistrationCounts] = useState<Record<string, number>>({});
+  const [registrationNames, setRegistrationNames] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -49,14 +50,27 @@ export default function Index() {
 
       setBarShifts(shifts || []);
 
-      // Fetch registration counts for each shift
+      // Fetch registration counts and names for each shift
       const counts: Record<string, number> = {};
+      const names: Record<string, string[]> = {};
+      
       for (const shift of shifts || []) {
         const { data: countData } = await supabase
           .rpc("get_active_registration_count", { shift_uuid: shift.id });
         counts[shift.id] = countData || 0;
+
+        // Fetch registration names
+        const { data: registrations } = await supabase
+          .from("registrations")
+          .select("name")
+          .eq("shift_id", shift.id)
+          .eq("status", "active");
+        
+        names[shift.id] = registrations?.map(r => r.name) || [];
       }
+      
       setRegistrationCounts(counts);
+      setRegistrationNames(names);
     } catch (error) {
       console.error("Error fetching bar shifts:", error);
     } finally {
@@ -78,15 +92,29 @@ export default function Index() {
     if (shift.status === "full" || count >= shift.max_people) {
       return <Badge variant="destructive">Vol</Badge>;
     }
-    if (count >= shift.min_people) {
-      return <Badge className="bg-green-500 hover:bg-green-600">Voldoende</Badge>;
-    }
-    return <Badge variant="secondary">Open</Badge>;
+    return <Badge variant="secondary">{count} personen</Badge>;
   };
 
   const canRegister = (shift: BarShift) => {
     const count = registrationCounts[shift.id] || 0;
     return shift.status === "open" && count < shift.max_people;
+  };
+
+  const generateCalendarEvent = (shift: BarShift) => {
+    const startDateTime = new Date(`${shift.shift_date}T${shift.start_time}`);
+    const endDateTime = new Date(`${shift.shift_date}T${shift.end_time}`);
+    
+    const formatDateTime = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const title = encodeURIComponent(shift.title);
+    const details = encodeURIComponent(`Bardienst: ${shift.title}`);
+    const location = encodeURIComponent("Voetbalclub");
+    
+    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatDateTime(startDateTime)}/${formatDateTime(endDateTime)}&details=${details}&location=${location}`;
+    
+    window.open(googleUrl, '_blank');
   };
 
   if (loading) {
@@ -154,6 +182,7 @@ export default function Index() {
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {barShifts.map((shift) => {
                   const count = registrationCounts[shift.id] || 0;
+                  const names = registrationNames[shift.id] || [];
                   const shiftDate = new Date(shift.shift_date);
                   
                   return (
@@ -169,7 +198,7 @@ export default function Index() {
                             {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
                           </div>
                           <div className="flex items-center text-sm text-gray-600">
-                            <Clock className="h-4 w-4 mr-2" />
+                            <Users className="h-4 w-4 mr-2" />
                             {shift.start_time} - {shift.end_time}
                           </div>
                         </CardDescription>
@@ -178,28 +207,41 @@ export default function Index() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center text-sm">
                             <Users className="h-4 w-4 mr-2 text-[#0c6be0]" />
-                            <span className="font-medium">{count}/{shift.max_people}</span>
-                            <span className="text-gray-500 ml-1">ingeschreven</span>
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            Min: {shift.min_people}
+                            <span className="font-medium">{count} personen ingeschreven</span>
                           </div>
                         </div>
 
+                        {names.length > 0 && (
+                          <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                            <p className="font-medium mb-1">Ingeschreven:</p>
+                            <p>{names.join(', ')}</p>
+                          </div>
+                        )}
+
                         {shift.remarks && (
-                          <div className="flex items-start text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                          <div className="flex items-start text-sm text-gray-600 bg-yellow-50 p-3 rounded">
                             <MessageSquare className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
                             <p>{shift.remarks}</p>
                           </div>
                         )}
 
-                        <Button
-                          onClick={() => setSelectedShift(shift)}
-                          disabled={!canRegister(shift)}
-                          className="w-full bg-[#0c6be0] hover:bg-[#0952b8] disabled:bg-gray-300"
-                        >
-                          {!canRegister(shift) ? "Niet beschikbaar" : "Inschrijven"}
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={() => setSelectedShift(shift)}
+                            disabled={!canRegister(shift)}
+                            className="flex-1 bg-[#0c6be0] hover:bg-[#0952b8] disabled:bg-gray-300"
+                          >
+                            {!canRegister(shift) ? "Niet beschikbaar" : "Inschrijven"}
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => generateCalendarEvent(shift)}
+                            className="whitespace-nowrap"
+                          >
+                            + Agenda
+                          </Button>
+                        </div>
                       </CardContent>
                     </Card>
                   );
