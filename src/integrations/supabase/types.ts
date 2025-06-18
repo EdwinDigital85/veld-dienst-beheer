@@ -9,16 +9,127 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      admin_users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      bar_shifts: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          max_people: number
+          min_people: number
+          remarks: string | null
+          shift_date: string
+          start_time: string
+          status: Database["public"]["Enums"]["shift_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          max_people: number
+          min_people: number
+          remarks?: string | null
+          shift_date: string
+          start_time: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          max_people?: number
+          min_people?: number
+          remarks?: string | null
+          shift_date?: string
+          start_time?: string
+          status?: Database["public"]["Enums"]["shift_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      registrations: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string
+          phone: string
+          shift_id: string
+          status: Database["public"]["Enums"]["registration_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          phone: string
+          shift_id: string
+          status?: Database["public"]["Enums"]["registration_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          phone?: string
+          shift_id?: string
+          status?: Database["public"]["Enums"]["registration_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registrations_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "bar_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_active_registration_count: {
+        Args: { shift_uuid: string }
+        Returns: number
+      }
+      is_shift_full: {
+        Args: { shift_uuid: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      registration_status: "active" | "pending_removal"
+      shift_status: "open" | "full" | "closed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +244,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      registration_status: ["active", "pending_removal"],
+      shift_status: ["open", "full", "closed"],
+    },
   },
 } as const
