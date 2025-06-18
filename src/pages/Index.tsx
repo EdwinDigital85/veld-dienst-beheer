@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarDays, Users, MessageSquare, LogOut } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { CalendarDays, Users, MessageSquare, LogOut, EyeOff, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import RegistrationForm from "@/components/RegistrationForm";
@@ -32,6 +33,7 @@ export default function Index() {
   const [registrationCounts, setRegistrationCounts] = useState<Record<string, number>>({});
   const [registrationNames, setRegistrationNames] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
+  const [hideUnavailable, setHideUnavailable] = useState(false);
 
   useEffect(() => {
     fetchBarShifts();
@@ -99,6 +101,13 @@ export default function Index() {
     return shift.status === "open" && count < shift.max_people;
   };
 
+  const getFilteredShifts = () => {
+    if (!hideUnavailable) {
+      return barShifts;
+    }
+    return barShifts.filter(shift => canRegister(shift));
+  };
+
   const generateCalendarEvent = (shift: BarShift) => {
     const startDateTime = new Date(`${shift.shift_date}T${shift.start_time}`);
     const endDateTime = new Date(`${shift.shift_date}T${shift.end_time}`);
@@ -126,6 +135,8 @@ export default function Index() {
       </div>
     );
   }
+
+  const filteredShifts = getFilteredShifts();
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -169,26 +180,47 @@ export default function Index() {
 
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-6 sm:py-8">
-        <Tabs defaultValue="calendar" className="space-y-6">
+        <Tabs defaultValue="list" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="calendar" className="text-sm">Kalender Overzicht</TabsTrigger>
             <TabsTrigger value="list" className="text-sm">Lijst Weergave</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-sm">Kalender Overzicht</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="calendar" className="space-y-6">
-            <BarShiftCalendar onShiftSelect={setSelectedShift} />
-          </TabsContent>
-
           <TabsContent value="list" className="space-y-6">
-            {barShifts.length === 0 ? (
+            {/* Filter Toggle */}
+            <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm border">
+              <div className="flex items-center space-x-3">
+                {hideUnavailable ? (
+                  <EyeOff className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <Eye className="h-5 w-5 text-gray-500" />
+                )}
+                <span className="text-sm font-medium text-gray-700">
+                  Verberg niet-boekbare diensten
+                </span>
+              </div>
+              <Switch
+                checked={hideUnavailable}
+                onCheckedChange={setHideUnavailable}
+              />
+            </div>
+
+            {filteredShifts.length === 0 ? (
               <div className="text-center py-12">
                 <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold text-gray-600 mb-2">Geen bardiensten beschikbaar</h2>
-                <p className="text-gray-500">Er zijn momenteel geen bardiensten gepland.</p>
+                <h2 className="text-xl font-semibold text-gray-600 mb-2">
+                  {hideUnavailable ? "Geen beschikbare bardiensten" : "Geen bardiensten beschikbaar"}
+                </h2>
+                <p className="text-gray-500">
+                  {hideUnavailable 
+                    ? "Er zijn momenteel geen boekbare bardiensten beschikbaar." 
+                    : "Er zijn momenteel geen bardiensten gepland."
+                  }
+                </p>
               </div>
             ) : (
               <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {barShifts.map((shift) => {
+                {filteredShifts.map((shift) => {
                   const count = registrationCounts[shift.id] || 0;
                   const names = registrationNames[shift.id] || [];
                   const shiftDate = new Date(shift.shift_date);
@@ -274,6 +306,10 @@ export default function Index() {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          <TabsContent value="calendar" className="space-y-6">
+            <BarShiftCalendar onShiftSelect={setSelectedShift} />
           </TabsContent>
         </Tabs>
       </main>
