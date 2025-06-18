@@ -143,19 +143,15 @@ export default function Index() {
       {/* Header with Logo */}
       <header className="bg-white shadow-md border-b-4 border-[#0c6be0]">
         <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div className="flex justify-center sm:justify-start flex-1">
               <img 
                 src="/lovable-uploads/cae344b2-9f96-4d55-97c3-b84fadef3473.png" 
                 alt="v.v. Boskant Logo" 
                 className="h-16 w-auto"
               />
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Bardiensten</h1>
-                <p className="text-gray-600 mt-1 text-sm sm:text-base">v.v. Boskant - Vrijwilligersrooster</p>
-              </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 variant="outline"
                 onClick={() => setShowUnsubscribe(true)}
