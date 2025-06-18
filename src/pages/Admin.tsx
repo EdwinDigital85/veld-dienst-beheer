@@ -33,26 +33,46 @@ export default function Admin() {
 
       setUser(session.user);
 
-      // Check if user is admin
-      const { data: adminData, error } = await supabase
-        .from("admin_users")
-        .select("*")
-        .eq("email", session.user.email)
-        .maybeSingle();
+      // Check if user is admin - try to get admin data
+      try {
+        const { data: adminData, error } = await supabase
+          .from("admin_users")
+          .select("*")
+          .eq("email", session.user.email)
+          .single();
 
-      if (error) throw error;
+        if (error) {
+          console.error("Admin check error:", error);
+          toast({
+            title: "Geen toegang",
+            description: "Je hebt geen admin rechten of er is een probleem met de database.",
+            variant: "destructive",
+          });
+          navigate("/");
+          return;
+        }
 
-      if (!adminData) {
+        if (!adminData) {
+          toast({
+            title: "Geen toegang",
+            description: "Je hebt geen admin rechten.",
+            variant: "destructive",
+          });
+          navigate("/");
+          return;
+        }
+
+        setAdminData(adminData);
+      } catch (error) {
+        console.error("Admin verification error:", error);
         toast({
-          title: "Geen toegang",
-          description: "Je hebt geen admin rechten.",
+          title: "Fout bij verificatie",
+          description: "Er is een probleem opgetreden bij het controleren van admin rechten.",
           variant: "destructive",
         });
         navigate("/");
         return;
       }
-
-      setAdminData(adminData);
     } catch (error) {
       console.error("Auth check error:", error);
       navigate("/");

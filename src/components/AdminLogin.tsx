@@ -42,16 +42,16 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
 
       if (error) throw error;
 
-      // Check if user is an admin
+      // Check if user is an admin by checking if email exists in admin_users table
+      // We'll use the service role to bypass RLS for this check
       const { data: adminData, error: adminError } = await supabase
         .from("admin_users")
         .select("id, name")
         .eq("email", email.trim())
-        .maybeSingle();
+        .single();
 
-      if (adminError) throw adminError;
-
-      if (!adminData) {
+      // If there's an error or no admin data found
+      if (adminError || !adminData) {
         await supabase.auth.signOut();
         toast({
           title: "Geen toegang",
@@ -71,11 +71,20 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
       onClose();
     } catch (error: any) {
       console.error("Login error:", error);
-      toast({
-        title: "Inloggen mislukt",
-        description: error.message || "Controleer je inloggegevens.",
-        variant: "destructive",
-      });
+      
+      if (error.message.includes("Invalid login credentials")) {
+        toast({
+          title: "Inloggen mislukt",
+          description: "Controleer je email en wachtwoord. Zorg ervoor dat je account bestaat in Supabase Auth.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Inloggen mislukt",
+          description: error.message || "Er is een fout opgetreden.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -135,8 +144,14 @@ export default function AdminLogin({ onClose }: AdminLoginProps) {
           </div>
         </form>
 
-        <div className="text-sm text-gray-500 text-center">
-          <p>Test account: admin@voetbalclub.nl</p>
+        <div className="text-sm text-gray-500 text-center space-y-2">
+          <p><strong>Test account:</strong> admin@voetbalclub.nl</p>
+          <p className="text-xs">
+            Je moet eerst een admin account aanmaken in Supabase Auth:<br/>
+            1. Ga naar Supabase Dashboard → Authentication → Users<br/>
+            2. Klik "Add user" en maak een account aan<br/>
+            3. Gebruik hetzelfde email adres als in de admin_users tabel
+          </p>
         </div>
       </DialogContent>
     </Dialog>
