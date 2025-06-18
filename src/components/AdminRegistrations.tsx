@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Clock, User, Mail, Phone, AlertTriangle, Check, X } from "lucide-react";
+import { CalendarDays, Clock, User, Mail, Phone, AlertTriangle, Check, X, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -28,7 +28,6 @@ interface Registration {
 
 export default function AdminRegistrations() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const { toast } = useToast();
@@ -37,11 +36,8 @@ export default function AdminRegistrations() {
     fetchRegistrations();
   }, []);
 
-  useEffect(() => {
-    filterRegistrations();
-  }, [registrations, statusFilter]);
-
   const fetchRegistrations = async () => {
+    setLoading(true);
     try {
       console.log("Fetching registrations...");
       const { data, error } = await supabase
@@ -62,7 +58,7 @@ export default function AdminRegistrations() {
         throw error;
       }
 
-      console.log("Fetched registrations:", data);
+      console.log("Raw fetched registrations:", data);
       setRegistrations(data || []);
     } catch (error) {
       console.error("Error fetching registrations:", error);
@@ -76,7 +72,10 @@ export default function AdminRegistrations() {
     }
   };
 
-  const filterRegistrations = () => {
+  const getFilteredRegistrations = () => {
+    console.log("Filtering registrations with filter:", statusFilter);
+    console.log("All registrations:", registrations);
+    
     let filtered = registrations;
     
     if (statusFilter === "pending_removal") {
@@ -87,7 +86,7 @@ export default function AdminRegistrations() {
     // "all" shows everything
 
     console.log("Filtered registrations:", filtered);
-    setFilteredRegistrations(filtered);
+    return filtered;
   };
 
   const approveRemoval = async (registrationId: string, registrationData: Registration) => {
@@ -180,6 +179,7 @@ export default function AdminRegistrations() {
     }
   };
 
+  const filteredRegistrations = getFilteredRegistrations();
   const pendingCount = registrations.filter(reg => reg.status === "pending_removal").length;
   const activeCount = registrations.filter(reg => reg.status === "active").length;
 
@@ -207,16 +207,27 @@ export default function AdminRegistrations() {
           </p>
         </div>
         
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-64">
-            <SelectValue placeholder="Filter status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Alle inschrijvingen ({registrations.length})</SelectItem>
-            <SelectItem value="pending_removal">Uitschrijfverzoeken ({pendingCount})</SelectItem>
-            <SelectItem value="active">Actieve inschrijvingen ({activeCount})</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-64">
+              <SelectValue placeholder="Filter status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Alle inschrijvingen ({registrations.length})</SelectItem>
+              <SelectItem value="pending_removal">Uitschrijfverzoeken ({pendingCount})</SelectItem>
+              <SelectItem value="active">Actieve inschrijvingen ({activeCount})</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Button
+            onClick={fetchRegistrations}
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {pendingCount > 0 && statusFilter !== "pending_removal" && (
