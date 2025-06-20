@@ -10,6 +10,7 @@ import { CalendarDays, Users, CheckCircle, AlertCircle, Mail, Phone, User, Clock
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { validateEmail, validatePhone, validateName, sanitizeInput } from "@/utils/inputValidation";
+import { useIsMobile, useIsSmallMobile } from "@/hooks/use-mobile";
 
 interface BarShift {
   id: string;
@@ -39,6 +40,9 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   const [showSuccess, setShowSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  
+  const isMobile = useIsMobile();
+  const isSmallMobile = useIsSmallMobile();
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -172,69 +176,72 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   if (showSuccess) {
     return (
       <Dialog open={true} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-lg bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+        <DialogContent className={`${isMobile ? 'sm:max-w-[95vw] max-w-[90vw]' : 'sm:max-w-lg'} bg-gradient-to-br from-green-50 to-emerald-50 border-green-200 ${isSmallMobile ? 'p-4' : ''}`}>
           <DialogHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+            <div className={`mx-auto ${isSmallMobile ? 'w-12 h-12' : 'w-16 h-16'} bg-green-100 rounded-full flex items-center justify-center mb-4`}>
+              <CheckCircle className={`${isSmallMobile ? 'h-6 w-6' : 'h-8 w-8'} text-green-600`} />
             </div>
-            <DialogTitle className="text-2xl font-bold text-green-700">Inschrijving succesvol!</DialogTitle>
-            <DialogDescription className="text-green-600">
+            <DialogTitle className={`${isSmallMobile ? 'text-xl' : 'text-2xl'} font-bold text-green-700`}>Inschrijving succesvol!</DialogTitle>
+            <DialogDescription className={`text-green-600 ${isSmallMobile ? 'text-sm' : ''}`}>
               Je bent succesvol ingeschreven voor de bardienst.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm space-y-4">
-            <h3 className="font-bold text-gray-900 text-lg">{shift.title}</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className={`bg-white rounded-xl ${isSmallMobile ? 'p-4' : 'p-6'} border border-green-200 shadow-sm space-y-3 sm:space-y-4`}>
+            <h3 className={`font-bold text-gray-900 ${isSmallMobile ? 'text-base' : 'text-lg'}`}>{shift.title}</h3>
+            <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-2 gap-4'} ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
               <div className="flex items-center text-gray-600">
-                <CalendarDays className="h-4 w-4 mr-2 text-blue-500" />
+                <CalendarDays className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
                 {format(shiftDate, "EEEE d MMMM", { locale: nl })}
               </div>
               <div className="flex items-center text-gray-600">
-                <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                <Clock className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
                 {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
               </div>
               <div className="flex items-center text-gray-600">
-                <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                <MapPin className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
                 v.v. Boskant
               </div>
               <div className="flex items-center text-gray-600">
-                <Users className="h-4 w-4 mr-2 text-blue-500" />
+                <Users className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
                 Bardienst
               </div>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-              <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
-                <CalendarDays className="h-4 w-4 mr-2" />
+          <div className="space-y-3 sm:space-y-4">
+            <div className={`bg-blue-50 border border-blue-200 rounded-xl ${isSmallMobile ? 'p-3' : 'p-4'}`}>
+              <h4 className={`font-semibold text-blue-900 ${isSmallMobile ? 'mb-1' : 'mb-2'} flex items-center ${isSmallMobile ? 'text-sm' : ''}`}>
+                <CalendarDays className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
                 Toevoegen aan agenda
               </h4>
-              <p className="text-sm text-blue-700 mb-3">
+              <p className={`text-blue-700 ${isSmallMobile ? 'mb-2 text-xs' : 'text-sm mb-3'}`}>
                 Vergeet je bardienst niet! Voeg hem toe aan je agenda.
               </p>
               <Button
                 onClick={generateCalendarEvent}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                className={`w-full bg-blue-600 hover:bg-blue-700 text-white ${isSmallMobile ? 'h-9 text-sm' : ''}`}
               >
-                <CalendarDays className="h-4 w-4 mr-2" />
+                <CalendarDays className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
                 Google Agenda
               </Button>
             </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-              <h4 className="font-semibold text-yellow-900 mb-2 flex items-center">
-                <Mail className="h-4 w-4 mr-2" />
+            <div className={`bg-yellow-50 border border-yellow-200 rounded-xl ${isSmallMobile ? 'p-3' : 'p-4'}`}>
+              <h4 className={`font-semibold text-yellow-900 ${isSmallMobile ? 'mb-1' : 'mb-2'} flex items-center ${isSmallMobile ? 'text-sm' : ''}`}>
+                <Mail className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
                 Email herinneringen
               </h4>
-              <p className="text-sm text-yellow-800">
+              <p className={`text-yellow-800 ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
                 Je ontvangt automatisch een herinnering een week en drie dagen voor de bardienst.
               </p>
             </div>
           </div>
 
-          <Button onClick={handleFinish} className="w-full bg-green-600 hover:bg-green-700 text-white">
+          <Button 
+            onClick={handleFinish} 
+            className={`w-full bg-green-600 hover:bg-green-700 text-white ${isSmallMobile ? 'h-10 text-sm' : ''}`}
+          >
             Sluiten
           </Button>
         </DialogContent>
@@ -244,45 +251,45 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+      <DialogContent className={`${isMobile ? 'sm:max-w-[95vw] max-w-[90vw]' : 'sm:max-w-lg'} bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 ${isSmallMobile ? 'p-4' : ''} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <Users className="h-8 w-8 text-blue-600" />
+          <div className={`mx-auto ${isSmallMobile ? 'w-12 h-12' : 'w-16 h-16'} bg-blue-100 rounde d-full flex items-center justify-center mb-4`}>
+            <Users className={`${isSmallMobile ? 'h-6 w-6' : 'h-8 w-8'} text-blue-600`} />
           </div>
-          <DialogTitle className="text-2xl font-bold text-blue-700">Inschrijven voor bardienst</DialogTitle>
-          <DialogDescription className="text-blue-600">
+          <DialogTitle className={`${isSmallMobile ? 'text-xl' : 'text-2xl'} font-bold text-blue-700`}>Inschrijven voor bardienst</DialogTitle>
+          <DialogDescription className={`text-blue-600 ${isSmallMobile ? 'text-sm' : ''}`}>
             Vul je gegevens in om je in te schrijven.
           </DialogDescription>
         </DialogHeader>
 
         {/* Shift Details */}
-        <div className="bg-white rounded-xl p-6 border border-blue-200 shadow-sm space-y-4">
-          <h3 className="font-bold text-gray-900 text-lg">{shift.title}</h3>
-          <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className={`bg-white rounded-xl ${isSmallMobile ? 'p-4' : 'p-6'} border border-blue-200 shadow-sm space-y-3 sm:space-y-4`}>
+          <h3 className={`font-bold text-gray-900 ${isSmallMobile ? 'text-base' : 'text-lg'}`}>{shift.title}</h3>
+          <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-2 gap-4'} ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
             <div className="flex items-center text-gray-600">
-              <CalendarDays className="h-4 w-4 mr-2 text-blue-500" />
+              <CalendarDays className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
               {format(shiftDate, "EEEE d MMMM", { locale: nl })}
             </div>
             <div className="flex items-center text-gray-600">
-              <Clock className="h-4 w-4 mr-2 text-blue-500" />
+              <Clock className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
               {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
             </div>
           </div>
           {shift.remarks && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-800 font-medium flex items-start">
-                <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+            <div className={`bg-yellow-50 border border-yellow-200 rounded-lg ${isSmallMobile ? 'p-2' : 'p-3'}`}>
+              <p className={`text-yellow-800 font-medium flex items-start ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
+                <AlertCircle className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 mt-0.5 flex-shrink-0`} />
                 {shift.remarks}
               </p>
             </div>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+          <div className="space-y-3 sm:space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-gray-700 font-semibold flex items-center">
-                <User className="h-4 w-4 mr-2 text-blue-500" />
+              <Label htmlFor="name" className={`text-gray-700 font-semibold flex items-center ${isSmallMobile ? 'text-sm' : ''}`}>
+                <User className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
                 Volledige naam *
               </Label>
               <Input
@@ -293,23 +300,23 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
                 placeholder="Je voor- en achternaam"
                 required
                 maxLength={50}
-                className={`h-12 text-base border-2 transition-all duration-200 ${
+                className={`${isSmallMobile ? 'h-10 text-sm' : 'h-12 text-base'} border-2 transition-all duration-200 ${
                   errors.name 
                     ? 'border-red-300 focus:border-red-500 bg-red-50' 
                     : 'border-blue-200 focus:border-blue-500 bg-white'
                 }`}
               />
               {errors.name && (
-                <p className="text-sm text-red-600 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <p className={`text-red-600 flex items-center ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
+                  <AlertCircle className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                   {errors.name}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-700 font-semibold flex items-center">
-                <Mail className="h-4 w-4 mr-2 text-blue-500" />
+              <Label htmlFor="email" className={`text-gray-700 font-semibold flex items-center ${isSmallMobile ? 'text-sm' : ''}`}>
+                <Mail className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
                 Emailadres *
               </Label>
               <Input
@@ -320,23 +327,23 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
                 placeholder="je@email.nl"
                 required
                 maxLength={100}
-                className={`h-12 text-base border-2 transition-all duration-200 ${
+                className={`${isSmallMobile ? 'h-10 text-sm' : 'h-12 text-base'} border-2 transition-all duration-200 ${
                   errors.email 
                     ? 'border-red-300 focus:border-red-500 bg-red-50' 
                     : 'border-blue-200 focus:border-blue-500 bg-white'
                 }`}
               />
               {errors.email && (
-                <p className="text-sm text-red-600 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <p className={`text-red-600 flex items-center ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
+                  <AlertCircle className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                   {errors.email}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phone" className="text-gray-700 font-semibold flex items-center">
-                <Phone className="h-4 w-4 mr-2 text-blue-500" />
+              <Label htmlFor="phone" className={`text-gray-700 font-semibold flex items-center ${isSmallMobile ? 'text-sm' : ''}`}>
+                <Phone className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2 text-blue-500`} />
                 Telefoonnummer *
               </Label>
               <Input
@@ -347,39 +354,39 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
                 placeholder="06-12345678"
                 required
                 maxLength={15}
-                className={`h-12 text-base border-2 transition-all duration-200 ${
+                className={`${isSmallMobile ? 'h-10 text-sm' : 'h-12 text-base'} border-2 transition-all duration-200 ${
                   errors.phone 
                     ? 'border-red-300 focus:border-red-500 bg-red-50' 
                     : 'border-blue-200 focus:border-blue-500 bg-white'
                 }`}
               />
               {errors.phone && (
-                <p className="text-sm text-red-600 flex items-center">
-                  <AlertCircle className="h-4 w-4 mr-1" />
+                <p className={`text-red-600 flex items-center ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
+                  <AlertCircle className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                   {errors.phone}
                 </p>
               )}
             </div>
           </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-            <h4 className="font-semibold text-yellow-900 mb-2 flex items-center">
-              <AlertCircle className="h-4 w-4 mr-2" />
+          <div className={`bg-yellow-50 border border-yellow-200 rounded-xl ${isSmallMobile ? 'p-3' : 'p-4'}`}>
+            <h4 className={`font-semibold text-yellow-900 ${isSmallMobile ? 'mb-1' : 'mb-2'} flex items-center ${isSmallMobile ? 'text-sm' : ''}`}>
+              <AlertCircle className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-2`} />
               Belangrijke informatie
             </h4>
-            <ul className="text-sm text-yellow-800 space-y-1">
+            <ul className={`text-yellow-800 space-y-1 ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
               <li>• Eenmaal ingeschreven kun je alleen uitschrijven na admin goedkeuring</li>
               <li>• Je ontvangt automatische email herinneringen</li>
               <li>• Zorg dat je op tijd aanwezig bent</li>
             </ul>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className={`flex gap-2 sm:gap-3 pt-2 sm:pt-4 ${isMobile ? 'flex-col' : ''}`}>
             <Button
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1 h-12 border-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+              className={`${isMobile ? 'w-full' : 'flex-1'} ${isSmallMobile ? 'h-10' : 'h-12'} border-2 border-gray-300 text-gray-700 hover:bg-gray-50 ${isSmallMobile ? 'text-sm' : ''}`}
               disabled={loading}
             >
               Annuleren
@@ -387,11 +394,11 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              className={`${isMobile ? 'w-full' : 'flex-1'} ${isSmallMobile ? 'h-10' : 'h-12'} bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200 ${isSmallMobile ? 'text-sm' : ''}`}
             >
               {loading ? (
                 <>
-                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  <div className={`animate-spin rounded-full ${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} border-2 border-white border-t-transparent mr-2`}></div>
                   Bezig...
                 </>
               ) : (

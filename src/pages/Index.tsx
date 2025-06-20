@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { CalendarDays, Users, MessageSquare, LogOut, EyeOff, Eye, Clock, MapPin, Star } from "lucide-react";
+import { CalendarDays, Users, MessageSquare, LogOut, EyeOff, Eye, Clock, MapPin, Star, Menu } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import RegistrationForm from "@/components/RegistrationForm";
 import AdminLogin from "@/components/AdminLogin";
 import UnsubscribeModal from "@/components/UnsubscribeModal";
 import BarShiftCalendar from "@/components/BarShiftCalendar";
+import { useIsMobile, useIsSmallMobile } from "@/hooks/use-mobile";
 
 interface BarShift {
   id: string;
@@ -35,6 +36,10 @@ export default function Index() {
   const [registrationNames, setRegistrationNames] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const [hideUnavailable, setHideUnavailable] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  
+  const isMobile = useIsMobile();
+  const isSmallMobile = useIsSmallMobile();
 
   useEffect(() => {
     fetchBarShifts();
@@ -89,12 +94,12 @@ export default function Index() {
     const count = registrationCounts[shift.id] || 0;
     
     if (shift.status === "closed") {
-      return <Badge variant="destructive" className="bg-gray-500 text-white">Gesloten</Badge>;
+      return <Badge variant="destructive" className={`bg-gray-500 text-white ${isSmallMobile ? 'text-xs px-2 py-1' : ''}`}>Gesloten</Badge>;
     }
     if (shift.status === "full" || count >= shift.max_people) {
-      return <Badge variant="destructive" className="bg-red-500 text-white">Vol</Badge>;
+      return <Badge variant="destructive" className={`bg-red-500 text-white ${isSmallMobile ? 'text-xs px-2 py-1' : ''}`}>Vol</Badge>;
     }
-    return <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300">
+    return <Badge variant="secondary" className={`bg-green-100 text-green-800 border-green-300 ${isSmallMobile ? 'text-xs px-2 py-1' : ''}`}>
       {count}/{shift.max_people} beschikbaar
     </Badge>;
   };
@@ -130,7 +135,7 @@ export default function Index() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50 flex items-center justify-center p-4">
         <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-blue-200 border-t-blue-600 mx-auto"></div>
           <div className="space-y-2">
@@ -146,97 +151,144 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      {/* Modern Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-blue-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
+      {/* Mobile-Optimized Header */}
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-blue-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
             {/* Logo Section */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <div className="relative">
                 <img 
                   src="/lovable-uploads/cae344b2-9f96-4d55-97c3-b84fadef3473.png" 
                   alt="v.v. Boskant Logo" 
-                  className="h-14 w-auto transition-transform hover:scale-105"
+                  className={`${isSmallMobile ? 'h-10' : 'h-12 sm:h-14'} w-auto transition-transform hover:scale-105`}
                 />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-green-500 rounded-full border-2 border-white"></div>
               </div>
               <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-gray-900">Bardiensten</h1>
-                <p className="text-sm text-gray-600">v.v. Boskant</p>
+                <h1 className="text-lg sm:text-xl font-bold text-gray-900">Bardiensten</h1>
+                <p className="text-xs sm:text-sm text-gray-600">v.v. Boskant</p>
               </div>
+              {isMobile && (
+                <div className="block sm:hidden">
+                  <h1 className="text-sm font-bold text-gray-900">Bardiensten</h1>
+                </div>
+              )}
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-3">
+            {/* Mobile Menu Button */}
+            {isMobile && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2"
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+
+            {/* Desktop Action Buttons */}
+            {!isMobile && (
+              <div className="flex items-center space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUnsubscribe(true)}
+                  className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                  size="sm"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Uitschrijven
+                </Button>
+                <Button
+                  onClick={() => setShowAdminLogin(true)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                  size="sm"
+                >
+                  Admin
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Dropdown */}
+          {isMobile && mobileMenuOpen && (
+            <div className="border-t border-blue-100 py-4 space-y-3">
               <Button
                 variant="outline"
-                onClick={() => setShowUnsubscribe(true)}
-                className="hidden sm:inline-flex bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                onClick={() => {
+                  setShowUnsubscribe(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
                 size="sm"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Uitschrijven
               </Button>
               <Button
-                onClick={() => setShowAdminLogin(true)}
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
+                onClick={() => {
+                  setShowAdminLogin(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
                 size="sm"
               >
                 Admin
               </Button>
             </div>
-          </div>
+          )}
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {/* Welcome Section */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-8 sm:mb-12">
+          <h2 className={`${isSmallMobile ? 'text-2xl' : 'text-3xl sm:text-4xl'} font-bold text-gray-900 mb-2 sm:mb-4`}>
             Welkom bij onze <span className="text-blue-600">Bardiensten</span>
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className={`${isSmallMobile ? 'text-base' : 'text-lg sm:text-xl'} text-gray-600 max-w-2xl mx-auto px-4`}>
             Schrijf je in voor een bardienst en help mee met het verenigingsleven
           </p>
         </div>
 
-        <Tabs defaultValue="list" className="space-y-8">
+        <Tabs defaultValue="list" className="space-y-6 sm:space-y-8">
           <div className="flex justify-center">
-            <TabsList className="grid w-full max-w-md grid-cols-2 bg-blue-50 p-1">
+            <TabsList className={`grid w-full ${isMobile ? 'max-w-sm' : 'max-w-md'} grid-cols-2 bg-blue-50 p-1`}>
               <TabsTrigger 
                 value="list" 
-                className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
+                className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${isSmallMobile ? 'text-sm px-2' : ''}`}
               >
-                <Users className="h-4 w-4 mr-2" />
+                <Users className={`${isSmallMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
                 Lijst
               </TabsTrigger>
               <TabsTrigger 
                 value="calendar" 
-                className="data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm"
+                className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${isSmallMobile ? 'text-sm px-2' : ''}`}
               >
-                <CalendarDays className="h-4 w-4 mr-2" />
+                <CalendarDays className={`${isSmallMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-2'}`} />
                 Kalender
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="list" className="space-y-6">
+          <TabsContent value="list" className="space-y-4 sm:space-y-6">
             {/* Filter Section */}
             <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+              <CardContent className={`${isSmallMobile ? 'p-4' : 'p-6'}`}>
+                <div className={`flex ${isMobile ? 'flex-col space-y-4' : 'items-center justify-between'}`}>
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
+                    <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
                       {hideUnavailable ? (
-                        <EyeOff className="h-5 w-5 text-blue-600" />
+                        <EyeOff className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                       ) : (
-                        <Eye className="h-5 w-5 text-blue-600" />
+                        <Eye className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
                       )}
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-900">Weergave Filter</h3>
-                      <p className="text-sm text-gray-600">
+                    <div className="flex-1">
+                      <h3 className={`font-semibold text-gray-900 ${isSmallMobile ? 'text-sm' : ''}`}>Weergave Filter</h3>
+                      <p className={`text-gray-600 ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
                         Toon alleen beschikbare bardiensten
                       </p>
                     </div>
@@ -244,7 +296,7 @@ export default function Index() {
                   <Switch
                     checked={hideUnavailable}
                     onCheckedChange={setHideUnavailable}
-                    className="data-[state=checked]:bg-blue-600"
+                    className="data-[state=checked]:bg-blue-600 flex-shrink-0"
                   />
                 </div>
               </CardContent>
@@ -253,14 +305,14 @@ export default function Index() {
             {/* Shifts Grid */}
             {filteredShifts.length === 0 ? (
               <Card className="border-dashed border-2 border-gray-200">
-                <CardContent className="text-center py-16">
-                  <div className="w-20 h-20 mx-auto mb-6 bg-gray-100 rounded-full flex items-center justify-center">
-                    <Users className="h-10 w-10 text-gray-400" />
+                <CardContent className={`text-center ${isSmallMobile ? 'py-12' : 'py-16'}`}>
+                  <div className={`${isSmallMobile ? 'w-16 h-16' : 'w-20 h-20'} mx-auto mb-4 sm:mb-6 bg-gray-100 rounded-full flex items-center justify-center`}>
+                    <Users className={`${isSmallMobile ? 'h-8 w-8' : 'h-10 w-10'} text-gray-400`} />
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                  <h3 className={`${isSmallMobile ? 'text-lg' : 'text-xl'} font-semibold text-gray-600 mb-2`}>
                     {hideUnavailable ? "Geen beschikbare bardiensten" : "Geen bardiensten gepland"}
                   </h3>
-                  <p className="text-gray-500 max-w-md mx-auto">
+                  <p className={`text-gray-500 max-w-md mx-auto px-4 ${isSmallMobile ? 'text-sm' : ''}`}>
                     {hideUnavailable 
                       ? "Er zijn momenteel geen boekbare bardiensten beschikbaar. Probeer later opnieuw." 
                       : "Er zijn momenteel geen bardiensten gepland. Kom later terug voor updates."
@@ -269,7 +321,7 @@ export default function Index() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <div className={`grid gap-4 sm:gap-6 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2 lg:grid-cols-3'}`}>
                 {filteredShifts.map((shift) => {
                   const count = registrationCounts[shift.id] || 0;
                   const names = registrationNames[shift.id] || [];
@@ -287,29 +339,31 @@ export default function Index() {
                           : 'bg-gradient-to-br from-white to-blue-50 border-l-4 border-l-blue-400'
                       }`}
                     >
-                      <CardHeader className="pb-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      <CardHeader className={`${isSmallMobile ? 'pb-3' : 'pb-4'}`}>
+                        <div className="flex justify-between items-start mb-3 gap-2">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className={`${isSmallMobile ? 'text-base' : 'text-lg'} font-bold text-gray-900 group-hover:text-blue-600 transition-colors truncate`}>
                               {shift.title}
                             </CardTitle>
-                            <div className="flex items-center mt-2 space-x-4 text-sm text-gray-600">
+                            <div className={`flex items-center mt-2 ${isMobile ? 'flex-col items-start space-y-1' : 'space-x-4'} ${isSmallMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>
                               <div className="flex items-center">
-                                <CalendarDays className="h-4 w-4 mr-1" />
+                                <CalendarDays className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                                 {format(shiftDate, "EEEE d MMM", { locale: nl })}
                               </div>
                               <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1" />
+                                <Clock className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                                 {shift.start_time.slice(0, 5)}-{shift.end_time.slice(0, 5)}
                               </div>
                             </div>
                           </div>
-                          {getStatusBadge(shift)}
+                          <div className="flex-shrink-0">
+                            {getStatusBadge(shift)}
+                          </div>
                         </div>
 
                         {/* Progress Bar */}
                         <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
+                          <div className={`flex justify-between ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
                             <span className="text-gray-600">Inschrijvingen</span>
                             <span className="font-semibold text-gray-900">
                               {count}/{shift.max_people}
@@ -329,16 +383,16 @@ export default function Index() {
                       <CardContent className="space-y-4">
                         {/* Registered Names */}
                         {names.length > 0 && (
-                          <div className="bg-white/70 backdrop-blur-sm rounded-lg p-4 border border-blue-100">
+                          <div className="bg-white/70 backdrop-blur-sm rounded-lg p-3 sm:p-4 border border-blue-100">
                             <div className="flex items-center mb-2">
-                              <Star className="h-4 w-4 text-blue-500 mr-2" />
-                              <h4 className="font-semibold text-gray-900 text-sm">Ingeschreven</h4>
+                              <Star className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} text-blue-500 mr-2`} />
+                              <h4 className={`font-semibold text-gray-900 ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>Ingeschreven</h4>
                             </div>
                             <div className="flex flex-wrap gap-1">
                               {names.map((name, index) => (
                                 <span 
                                   key={index}
-                                  className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium"
+                                  className={`px-2 py-1 bg-blue-100 text-blue-800 rounded-full font-medium ${isSmallMobile ? 'text-xs' : 'text-xs'}`}
                                 >
                                   {name}
                                 </span>
@@ -351,18 +405,18 @@ export default function Index() {
                         {shift.remarks && (
                           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                             <div className="flex items-start">
-                              <MessageSquare className="h-4 w-4 text-yellow-600 mr-2 mt-0.5 flex-shrink-0" />
-                              <p className="text-sm text-yellow-800 font-medium">{shift.remarks}</p>
+                              <MessageSquare className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} text-yellow-600 mr-2 mt-0.5 flex-shrink-0`} />
+                              <p className={`text-yellow-800 font-medium ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>{shift.remarks}</p>
                             </div>
                           </div>
                         )}
 
                         {/* Action Buttons */}
-                        <div className="flex gap-3 pt-2">
+                        <div className={`flex gap-2 sm:gap-3 pt-2 ${isMobile ? 'flex-col' : ''}`}>
                           <Button
                             onClick={() => setSelectedShift(shift)}
                             disabled={!isAvailable}
-                            className={`flex-1 font-semibold transition-all duration-200 ${
+                            className={`${isMobile ? 'w-full' : 'flex-1'} font-semibold transition-all duration-200 ${isSmallMobile ? 'h-10 text-sm' : 'h-11'} ${
                               isAvailable 
                                 ? "bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105" 
                                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
@@ -375,9 +429,10 @@ export default function Index() {
                           <Button
                             variant="outline"
                             onClick={() => generateCalendarEvent(shift)}
-                            className="bg-white/80 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200"
+                            className={`${isMobile ? 'w-full' : ''} bg-white/80 border-blue-200 text-blue-600 hover:bg-blue-50 hover:border-blue-300 transition-all duration-200 ${isSmallMobile ? 'h-10' : 'h-11'} ${isMobile ? '' : 'w-12'}`}
                           >
-                            <CalendarDays className="h-4 w-4" />
+                            <CalendarDays className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} ${isMobile ? 'mr-2' : ''}`} />
+                            {isMobile && 'Agenda'}
                           </Button>
                         </div>
                       </CardContent>

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, CalendarDays, Users, Clock, Sparkles } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, startOfWeek, endOfWeek, isToday, isPast, isThisWeek } from "date-fns";
 import { nl } from "date-fns/locale";
+import { useIsMobile, useIsSmallMobile } from "@/hooks/use-mobile";
 
 interface BarShift {
   id: string;
@@ -30,6 +31,9 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   const [registrationCounts, setRegistrationCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  
+  const isMobile = useIsMobile();
+  const isSmallMobile = useIsSmallMobile();
 
   useEffect(() => {
     fetchShifts();
@@ -70,7 +74,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   };
 
   const getCalendarDays = () => {
-    const monthStart = startOfMonth(currentDate);
+    const monthStart = startOfMonth(current Date);
     const monthEnd = endOfMonth(currentDate);
     const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 });
     const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 });
@@ -107,8 +111,8 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   if (loading) {
     return (
       <Card className="bg-white shadow-xl border-0">
-        <CardContent className="text-center py-16">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-blue-600 mx-auto mb-4"></div>
+        <CardContent className={`text-center ${isSmallMobile ? 'py-12' : 'py-16'}`}>
+          <div className={`animate-spin rounded-full ${isSmallMobile ? 'h-10 w-10' : 'h-12 w-12'} border-4 border-blue-200 border-t-blue-600 mx-auto mb-4`}></div>
           <div className="space-y-2">
             <div className="h-4 bg-gray-200 rounded animate-pulse w-32 mx-auto"></div>
             <div className="h-3 bg-gray-100 rounded animate-pulse w-24 mx-auto"></div>
@@ -119,46 +123,46 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Calendar Card */}
       <Card className="bg-white shadow-xl border-0 overflow-hidden">
-        <CardHeader className="pb-6 bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle className="text-2xl text-white flex items-center">
-              <div className="p-2 bg-white/20 rounded-lg mr-3">
-                <CalendarDays className="h-6 w-6" />
+        <CardHeader className={`${isSmallMobile ? 'pb-4' : 'pb-6'} bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 text-white`}>
+          <div className={`flex ${isMobile ? 'flex-col' : 'sm:flex-row'} justify-between items-start sm:items-center ${isMobile ? 'gap-3' : 'gap-4'}`}>
+            <CardTitle className={`${isSmallMobile ? 'text-lg' : 'text-xl sm:text-2xl'} text-white flex items-center`}>
+              <div className={`p-2 bg-white/20 rounded-lg mr-2 sm:mr-3`}>
+                <CalendarDays className={`${isSmallMobile ? 'h-4 w-4' : 'h-5 w-5 sm:h-6 sm:w-6'}`} />
               </div>
-              Bardiensten Kalender
+              {isSmallMobile ? 'Kalender' : 'Bardiensten Kalender'}
             </CardTitle>
-            <div className="flex items-center gap-2 w-full sm:w-auto justify-center">
+            <div className={`flex items-center ${isMobile ? 'justify-center w-full' : 'gap-2'}`}>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentDate(subMonths(currentDate, 1))}
-                className="text-white hover:bg-white/20 h-10 w-10 p-0 transition-all duration-200"
+                className={`text-white hover:bg-white/20 transition-all duration-200 ${isSmallMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}`}
               >
-                <ChevronLeft className="h-5 w-5" />
+                <ChevronLeft className={`${isSmallMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
               </Button>
-              <div className="text-lg font-semibold px-6 min-w-[180px] text-center capitalize">
+              <div className={`${isSmallMobile ? 'text-sm' : 'text-base sm:text-lg'} font-semibold ${isMobile ? 'px-4 min-w-[140px]' : 'px-6 min-w-[180px]'} text-center capitalize`}>
                 {monthName}
               </div>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => setCurrentDate(addMonths(currentDate, 1))}
-                className="text-white hover:bg-white/20 h-10 w-10 p-0 transition-all duration-200"
+                className={`text-white hover:bg-white/20 transition-all duration-200 ${isSmallMobile ? 'h-8 w-8 p-0' : 'h-10 w-10 p-0'}`}
               >
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className={`${isSmallMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
               </Button>
             </div>
           </div>
         </CardHeader>
         
-        <CardContent className="p-6">
+        <CardContent className={`${isSmallMobile ? 'p-3' : 'p-4 sm:p-6'}`}>
           {/* Weekday Headers */}
-          <div className="grid grid-cols-7 gap-2 mb-4">
+          <div className={`grid grid-cols-7 ${isSmallMobile ? 'gap-1 mb-2' : 'gap-2 mb-4'}`}>
             {['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo'].map((day, index) => (
-              <div key={day} className={`text-center text-sm font-bold py-3 rounded-lg ${
+              <div key={day} className={`text-center ${isSmallMobile ? 'text-xs' : 'text-sm'} font-bold ${isSmallMobile ? 'py-2' : 'py-3'} rounded-lg ${
                 index >= 5 ? 'text-blue-600 bg-blue-50' : 'text-gray-700 bg-gray-50'
               }`}>
                 {day}
@@ -167,7 +171,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
           </div>
           
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-2">
+          <div className={`grid grid-cols-7 ${isSmallMobile ? 'gap-1' : 'gap-2'}`}>
             {days.map((day, index) => {
               const dayShifts = getShiftsForDay(day);
               const isCurrentMonth = isSameMonth(day, currentDate);
@@ -179,7 +183,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
               return (
                 <div
                   key={index}
-                  className={`min-h-[160px] p-2 rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
+                  className={`${isSmallMobile ? 'min-h-[100px] p-1' : 'min-h-[120px] sm:min-h-[160px] p-2'} rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg ${
                     isCurrentMonth 
                       ? isCurrentDay 
                         ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-blue-400 shadow-md' 
@@ -190,7 +194,7 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                   } ${isWeekend && isCurrentMonth ? 'bg-gradient-to-br from-indigo-25 to-purple-25' : ''}`}
                   onClick={() => setSelectedDay(day)}
                 >
-                  <div className={`text-lg font-bold mb-3 text-center ${
+                  <div className={`${isSmallMobile ? 'text-sm' : 'text-base sm:text-lg'} font-bold ${isSmallMobile ? 'mb-1' : 'mb-2 sm:mb-3'} text-center ${
                     isCurrentMonth 
                       ? isCurrentDay 
                         ? 'text-blue-700' 
@@ -201,19 +205,19 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                   }`}>
                     {format(day, 'd')}
                     {isCurrentDay && (
-                      <div className="w-2 h-2 bg-blue-600 rounded-full mx-auto mt-1"></div>
+                      <div className={`${isSmallMobile ? 'w-1.5 h-1.5' : 'w-2 h-2'} bg-blue-600 rounded-full mx-auto mt-1`}></div>
                     )}
                   </div>
                   
                   <div className="space-y-1">
-                    {dayShifts.slice(0, 2).map(shift => {
+                    {dayShifts.slice(0, isSmallMobile ? 1 : 2).map(shift => {
                       const count = registrationCounts[shift.id] || 0;
                       const isFull = count >= shift.max_people || shift.status === "full";
                       
                       return (
                         <div
                           key={shift.id}
-                          className={`text-xs p-2 rounded-lg cursor-pointer transition-all duration-200 border-2 ${
+                          className={`${isSmallMobile ? 'text-xs p-1' : 'text-xs p-2'} rounded-lg cursor-pointer transition-all duration-200 border-2 ${
                             canRegister(shift)
                               ? 'bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 shadow-sm'
                               : isFull 
@@ -225,25 +229,25 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                             onShiftSelect(shift);
                           }}
                         >
-                          <div className="font-semibold text-gray-800 mb-1 text-[11px] leading-tight truncate">
-                            {shift.title}
+                          <div className={`font-semibold text-gray-800 ${isSmallMobile ? 'mb-0.5 text-xs' : 'mb-1 text-xs'} leading-tight truncate`}>
+                            {isSmallMobile ? shift.title.split(' ')[0] : shift.title}
                           </div>
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center text-[10px] text-gray-600">
-                              <Clock className="h-3 w-3 mr-1" />
+                            <div className={`flex items-center ${isSmallMobile ? 'text-xs' : 'text-xs'} text-gray-600`}>
+                              <Clock className={`${isSmallMobile ? 'h-2 w-2' : 'h-3 w-3'} mr-1`} />
                               {shift.start_time.slice(0, 5)}
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className="text-[10px] text-gray-600">{count}/{shift.max_people}</span>
-                              <div className={`w-2 h-2 rounded-full ${getStatusColor(shift)}`}></div>
+                              <span className={`${isSmallMobile ? 'text-xs' : 'text-xs'} text-gray-600`}>{count}/{shift.max_people}</span>
+                              <div className={`${isSmallMobile ? 'w-1.5 h-1.5' : 'w-2 h-2'} rounded-full ${getStatusColor(shift)}`}></div>
                             </div>
                           </div>
                         </div>
                       );
                     })}
-                    {dayShifts.length > 2 && (
-                      <div className="text-xs text-center text-blue-600 font-semibold bg-blue-50 rounded-lg py-1">
-                        +{dayShifts.length - 2} meer
+                    {dayShifts.length > (isSmallMobile ? 1 : 2) && (
+                      <div className={`${isSmallMobile ? 'text-xs' : 'text-xs'} text-center text-blue-600 font-semibold bg-blue-50 rounded-lg py-1`}>
+                        +{dayShifts.length - (isSmallMobile ? 1 : 2)} meer
                       </div>
                     )}
                   </div>
@@ -253,30 +257,30 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
           </div>
 
           {/* Legend */}
-          <div className="mt-8 bg-gradient-to-r from-gray-50 to-blue-50 p-6 rounded-xl border border-gray-200">
-            <div className="flex flex-wrap items-center justify-center gap-6 text-sm">
+          <div className={`${isSmallMobile ? 'mt-4' : 'mt-6 sm:mt-8'} bg-gradient-to-r from-gray-50 to-blue-50 ${isSmallMobile ? 'p-4' : 'p-6'} rounded-xl border border-gray-200`}>
+            <div className={`flex flex-wrap items-center ${isMobile ? 'justify-center gap-4' : 'justify-center gap-6'} ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-emerald-400 shadow-sm"></div>
+                <div className={`${isSmallMobile ? 'w-3 h-3' : 'w-4 h-4'} rounded-full bg-emerald-400 shadow-sm`}></div>
                 <span className="text-gray-700 font-medium">Beschikbaar</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-red-400 shadow-sm"></div>
+                <div className={`${isSmallMobile ? 'w-3 h-3' : 'w-4 h-4'} rounded-full bg-red-400 shadow-sm`}></div>
                 <span className="text-gray-700 font-medium">Vol</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded-full bg-gray-400 shadow-sm"></div>
+                <div className={`${isSmallMobile ? 'w-3 h-3' : 'w-4 h-4'} rounded-full bg-gray-400 shadow-sm`}></div>
                 <span className="text-gray-700 font-medium">Gesloten</span>
               </div>
             </div>
           </div>
 
           {shifts.length === 0 && (
-            <div className="text-center py-16">
-              <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center">
-                <CalendarDays className="h-10 w-10 text-blue-600" />
+            <div className={`text-center ${isSmallMobile ? 'py-12' : 'py-16'}`}>
+              <div className={`${isSmallMobile ? 'w-16 h-16' : 'w-20 h-20'} mx-auto ${isSmallMobile ? 'mb-4' : 'mb-6'} bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center`}>
+                <CalendarDays className={`${isSmallMobile ? 'h-8 w-8' : 'h-10 w-10'} text-blue-600`} />
               </div>
-              <h3 className="text-xl font-bold text-gray-600 mb-2">Geen bardiensten gepland</h3>
-              <p className="text-gray-500">Voor {monthName.toLowerCase()}</p>
+              <h3 className={`${isSmallMobile ? 'text-lg' : 'text-xl'} font-bold text-gray-600 mb-2`}>Geen bardiensten gepland</h3>
+              <p className={`text-gray-500 ${isSmallMobile ? 'text-sm' : ''}`}>Voor {monthName.toLowerCase()}</p>
             </div>
           )}
         </CardContent>
@@ -285,17 +289,17 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
       {/* Selected Day Details */}
       {selectedDay && (
         <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center text-blue-800">
-              <Sparkles className="h-5 w-5 mr-2" />
+          <CardHeader className={`${isSmallMobile ? 'pb-3' : ''}`}>
+            <CardTitle className={`flex items-center text-blue-800 ${isSmallMobile ? 'text-base' : ''}`}>
+              <Sparkles className={`${isSmallMobile ? 'h-4 w-4' : 'h-5 w-5'} mr-2`} />
               {format(selectedDay, "EEEE d MMMM yyyy", { locale: nl })}
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className={`${isSmallMobile ? 'pt-0' : ''}`}>
             {getShiftsForDay(selectedDay).length === 0 ? (
-              <p className="text-gray-600">Geen bardiensten gepland voor deze dag.</p>
+              <p className={`text-gray-600 ${isSmallMobile ? 'text-sm' : ''}`}>Geen bardiensten gepland voor deze dag.</p>
             ) : (
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className={`grid gap-3 sm:gap-4 ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'}`}>
                 {getShiftsForDay(selectedDay).map(shift => {
                   const count = registrationCounts[shift.id] || 0;
                   const isFull = count >= shift.max_people || shift.status === "full";
@@ -303,26 +307,26 @@ export default function BarShiftCalendar({ onShiftSelect }: BarShiftCalendarProp
                   return (
                     <div
                       key={shift.id}
-                      className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                      className={`${isSmallMobile ? 'p-3' : 'p-4'} rounded-lg border-2 cursor-pointer transition-all duration-200 ${
                         canRegister(shift)
                           ? 'bg-white border-emerald-200 hover:border-emerald-300 hover:shadow-md'
                           : 'bg-gray-50 border-gray-200 opacity-75'
                       }`}
                       onClick={() => onShiftSelect(shift)}
                     >
-                      <h4 className="font-semibold text-gray-900 mb-2">{shift.title}</h4>
-                      <div className="flex items-center justify-between text-sm text-gray-600">
+                      <h4 className={`font-semibold text-gray-900 ${isSmallMobile ? 'mb-1 text-sm' : 'mb-2'}`}>{shift.title}</h4>
+                      <div className={`flex items-center justify-between ${isSmallMobile ? 'text-xs' : 'text-sm'} text-gray-600`}>
                         <div className="flex items-center">
-                          <Clock className="h-4 w-4 mr-1" />
+                          <Clock className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                           {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
                         </div>
                         <div className="flex items-center">
-                          <Users className="h-4 w-4 mr-1" />
+                          <Users className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'} mr-1`} />
                           {count}/{shift.max_people}
                         </div>
                       </div>
                       {shift.remarks && (
-                        <p className="text-xs text-blue-700 mt-2 italic">{shift.remarks}</p>
+                        <p className={`text-blue-700 ${isSmallMobile ? 'mt-1 text-xs' : 'text-xs mt-2'} italic`}>{shift.remarks}</p>
                       )}
                     </div>
                   );
