@@ -8,6 +8,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminShifts from "@/components/AdminShifts";
 import AdminRegistrations from "@/components/AdminRegistrations";
 import AdminExport from "@/components/AdminExport";
+import AdminNotifications from "@/components/AdminNotifications";
 import CreateShiftForm from "@/components/CreateShiftForm";
 
 export default function Admin() {
@@ -114,9 +115,10 @@ export default function Admin() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="shifts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="shifts">Bardiensten Beheren</TabsTrigger>
             <TabsTrigger value="registrations">Inschrijvingen & Goedkeuringen</TabsTrigger>
+            <TabsTrigger value="notifications">Email Herinneringen</TabsTrigger>
             <TabsTrigger value="export">Registraties Exporteren</TabsTrigger>
           </TabsList>
 
@@ -126,6 +128,10 @@ export default function Admin() {
 
           <TabsContent value="registrations" className="space-y-6">
             <AdminRegistrations />
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            <AdminNotifications />
           </TabsContent>
 
           <TabsContent value="export" className="space-y-6">
