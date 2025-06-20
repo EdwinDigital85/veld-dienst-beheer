@@ -39,7 +39,7 @@ export default function Admin() {
       });
       return;
     }
-    setShowCreateForm(true);
+    setShowCreateShift(true);
   };
 
   if (isLoading) {
@@ -123,43 +123,63 @@ export default function Admin() {
       {/* Main Content */}
       <main className={`max-w-7xl mx-auto ${isSmallMobile ? 'px-3 py-4' : 'px-4 py-6 sm:px-6 sm:py-8'}`}>
         <Tabs defaultValue="shifts" className="space-y-4 sm:space-y-6">
-          {/* Mobile-Optimized Tabs */}
-          <div className="overflow-x-auto">
-            <TabsList className={`grid w-full ${isMobile ? 'grid-cols-2 min-w-[400px]' : 'grid-cols-4'} bg-blue-50 p-1 ${isSmallMobile ? 'h-auto' : ''}`}>
-              <TabsTrigger 
-                value="shifts" 
-                className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                  isSmallMobile ? 'text-xs py-2 px-2 h-auto whitespace-normal leading-tight' : 'text-sm'
-                }`}
-              >
-                {isSmallMobile ? 'Bardiensten' : 'Bardiensten Beheren'}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="registrations" 
-                className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                  isSmallMobile ? 'text-xs py-2 px-2 h-auto whitespace-normal leading-tight' : 'text-sm'
-                }`}
-              >
-                {isSmallMobile ? 'Inschrijvingen' : 'Inschrijvingen & Goedkeuringen'}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="notifications" 
-                className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                  isSmallMobile ? 'text-xs py-2 px-2 h-auto whitespace-normal leading-tight' : 'text-sm'
-                }`}
-              >
-                {isSmallMobile ? 'Herinneringen' : 'Email Herinneringen'}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="export" 
-                className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                  isSmallMobile ? 'text-xs py-2 px-2 h-auto whitespace-normal leading-tight' : 'text-sm'
-                }`}
-              >
-                {isSmallMobile ? 'Export' : 'Registraties Exporteren'}
-              </TabsTrigger>
-            </TabsList>
-          </div>
+          {/* Fully Responsive Tabs - No Horizontal Scroll */}
+          <TabsList className={`w-full ${
+            isSmallMobile 
+              ? 'grid grid-cols-2 grid-rows-2 h-auto p-1 gap-1' 
+              : isMobile 
+              ? 'grid grid-cols-2 grid-rows-2 h-auto p-1'
+              : 'grid grid-cols-4 h-10 p-1'
+          } bg-blue-50`}>
+            <TabsTrigger 
+              value="shifts" 
+              className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
+                isSmallMobile 
+                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
+                  : isMobile
+                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                  : 'text-sm'
+              }`}
+            >
+              {isSmallMobile ? 'Diensten' : isMobile ? 'Bardiensten' : 'Bardiensten Beheren'}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="registrations" 
+              className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
+                isSmallMobile 
+                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
+                  : isMobile
+                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                  : 'text-sm'
+              }`}
+            >
+              {isSmallMobile ? 'Registraties' : isMobile ? 'Inschrijvingen' : 'Inschrijvingen & Goedkeuringen'}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="notifications" 
+              className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
+                isSmallMobile 
+                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
+                  : isMobile
+                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                  : 'text-sm'
+              }`}
+            >
+              {isSmallMobile ? 'Email' : isMobile ? 'Herinneringen' : 'Email Herinneringen'}
+            </TabsTrigger>
+            <TabsTrigger 
+              value="export" 
+              className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
+                isSmallMobile 
+                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
+                  : isMobile
+                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                  : 'text-sm'
+              }`}
+            >
+              {isSmallMobile ? 'Export' : isMobile ? 'Export' : 'Registraties Exporteren'}
+            </TabsTrigger>
+          </TabsList>
 
           <TabsContent value="shifts" className="space-y-4 sm:space-y-6">
             <AdminShifts />
