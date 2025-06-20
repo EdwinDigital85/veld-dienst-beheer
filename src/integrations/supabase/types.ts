@@ -72,6 +72,38 @@ export type Database = {
         }
         Relationships: []
       }
+      email_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          notification_type: string
+          registration_id: string
+          sent_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notification_type: string
+          registration_id: string
+          sent_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notification_type?: string
+          registration_id?: string
+          sent_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_notifications_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       registrations: {
         Row: {
           created_at: string
@@ -121,6 +153,32 @@ export type Database = {
       get_active_registration_count: {
         Args: { shift_uuid: string }
         Returns: number
+      }
+      get_all_registrations_for_export: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          shift_date: string
+          shift_title: string
+          start_time: string
+          end_time: string
+          name: string
+          email: string
+          phone: string
+          registration_date: string
+        }[]
+      }
+      get_registrations_needing_notification: {
+        Args: { notification_days: number }
+        Returns: {
+          registration_id: string
+          shift_id: string
+          name: string
+          email: string
+          shift_title: string
+          shift_date: string
+          start_time: string
+          end_time: string
+        }[]
       }
       is_admin: {
         Args: { user_email: string }

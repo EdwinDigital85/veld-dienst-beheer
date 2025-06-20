@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import AdminShifts from "@/components/AdminShifts";
 import AdminRegistrations from "@/components/AdminRegistrations";
+import AdminExport from "@/components/AdminExport";
 import CreateShiftForm from "@/components/CreateShiftForm";
 
 export default function Admin() {
@@ -113,9 +114,10 @@ export default function Admin() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8">
         <Tabs defaultValue="shifts" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="shifts">Bardiensten Beheren</TabsTrigger>
             <TabsTrigger value="registrations">Inschrijvingen & Goedkeuringen</TabsTrigger>
+            <TabsTrigger value="export">Registraties Exporteren</TabsTrigger>
           </TabsList>
 
           <TabsContent value="shifts" className="space-y-6">
@@ -124,6 +126,10 @@ export default function Admin() {
 
           <TabsContent value="registrations" className="space-y-6">
             <AdminRegistrations />
+          </TabsContent>
+
+          <TabsContent value="export" className="space-y-6">
+            <AdminExport />
           </TabsContent>
         </Tabs>
       </main>
