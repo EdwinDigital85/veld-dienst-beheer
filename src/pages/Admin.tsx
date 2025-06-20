@@ -39,7 +39,7 @@ export default function Admin() {
       });
       return;
     }
-    setShowCreateShift(true);
+    setShowCreateForm(true);
   };
 
   if (isLoading) {
@@ -74,46 +74,50 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Mobile-Optimized Header */}
       <header className="bg-white shadow-md border-b-4 border-[#0c6be0] sticky top-0 z-50">
-        <div className={`max-w-7xl mx-auto ${isSmallMobile ? 'px-3 py-3' : 'px-4 py-4 sm:px-6'}`}>
-          <div className="space-y-3">
+        <div className={`w-full max-w-full ${isSmallMobile ? 'px-2 py-2' : 'px-3 py-3'}`}>
+          <div className="space-y-2">
             {/* Logo and Title Row */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between min-w-0">
+              <div className="flex items-center gap-2 min-w-0 flex-1">
                 <img 
                   src="/lovable-uploads/cae344b2-9f96-4d55-97c3-b84fadef3473.png" 
                   alt="v.v. Boskant Logo" 
-                  className={`${isSmallMobile ? 'h-12' : 'h-14 sm:h-16'} w-auto flex-shrink-0`}
+                  className={`${isSmallMobile ? 'h-10' : 'h-12'} w-auto flex-shrink-0`}
                 />
                 <div className="min-w-0 flex-1">
-                  <h1 className={`${isSmallMobile ? 'text-lg' : 'text-xl sm:text-2xl'} font-bold text-gray-800 leading-tight`}>
+                  <h1 className={`${isSmallMobile ? 'text-sm' : 'text-base'} font-bold text-gray-800 leading-tight truncate`}>
                     Admin Dashboard
                   </h1>
                   <p className={`text-gray-600 ${isSmallMobile ? 'text-xs' : 'text-sm'} truncate`}>
-                    Welkom terug, {adminData?.name}
+                    {adminData?.name}
                   </p>
                 </div>
               </div>
             </div>
             
-            {/* Action Buttons Row */}
-            <div className="flex gap-2 w-full">
+            {/* Action Buttons Row - Compact */}
+            <div className="flex gap-1 w-full">
               <Button
                 onClick={handleCreateShift}
-                className={`bg-[#0c6be0] text-white hover:bg-[#0952b8] flex-1 ${isSmallMobile ? 'h-11 text-sm' : 'h-12'}`}
+                className={`bg-[#0c6be0] text-white hover:bg-[#0952b8] flex-1 ${
+                  isSmallMobile ? 'h-9 text-xs px-2' : 'h-10 text-sm px-3'
+                }`}
               >
-                <Plus className={`${isSmallMobile ? 'h-4 w-4 mr-2' : 'h-5 w-5 mr-2'}`} />
-                Nieuwe Bardienst
+                <Plus className={`${isSmallMobile ? 'h-3 w-3 mr-1' : 'h-4 w-4 mr-1'}`} />
+                {isSmallMobile ? 'Nieuw' : 'Nieuwe Dienst'}
               </Button>
               <Button
                 onClick={logout}
                 variant="outline"
-                className={`bg-white border-gray-300 text-gray-700 hover:bg-gray-50 ${isSmallMobile ? 'h-11 px-4' : 'h-12 px-6'}`}
+                className={`bg-white border-gray-300 text-gray-700 hover:bg-gray-50 ${
+                  isSmallMobile ? 'h-9 px-2' : 'h-10 px-3'
+                }`}
               >
-                <LogOut className={`${isSmallMobile ? 'h-4 w-4' : 'h-5 w-5'}`} />
-                {!isSmallMobile && <span className="ml-2">Uitloggen</span>}
+                <LogOut className={`${isSmallMobile ? 'h-3 w-3' : 'h-4 w-4'}`} />
+                {!isSmallMobile && <span className="ml-1">Uit</span>}
               </Button>
             </div>
           </div>
@@ -121,23 +125,19 @@ export default function Admin() {
       </header>
 
       {/* Main Content */}
-      <main className={`max-w-7xl mx-auto ${isSmallMobile ? 'px-3 py-4' : 'px-4 py-6 sm:px-6 sm:py-8'}`}>
-        <Tabs defaultValue="shifts" className="space-y-4 sm:space-y-6">
-          {/* Fully Responsive Tabs - No Horizontal Scroll */}
+      <main className={`w-full max-w-full ${isSmallMobile ? 'px-2 py-3' : 'px-3 py-4'}`}>
+        <Tabs defaultValue="shifts" className="space-y-3 w-full">
+          {/* Fully Responsive Tabs - 2x2 Grid for Mobile */}
           <TabsList className={`w-full ${
-            isSmallMobile 
+            isMobile 
               ? 'grid grid-cols-2 grid-rows-2 h-auto p-1 gap-1' 
-              : isMobile 
-              ? 'grid grid-cols-2 grid-rows-2 h-auto p-1'
               : 'grid grid-cols-4 h-10 p-1'
           } bg-blue-50`}>
             <TabsTrigger 
               value="shifts" 
               className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                isSmallMobile 
-                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
-                  : isMobile
-                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                isMobile 
+                  ? `${isSmallMobile ? 'text-xs' : 'text-sm'} py-2 px-1 h-auto min-h-[32px] whitespace-normal text-center leading-tight` 
                   : 'text-sm'
               }`}
             >
@@ -146,22 +146,18 @@ export default function Admin() {
             <TabsTrigger 
               value="registrations" 
               className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                isSmallMobile 
-                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
-                  : isMobile
-                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                isMobile 
+                  ? `${isSmallMobile ? 'text-xs' : 'text-sm'} py-2 px-1 h-auto min-h-[32px] whitespace-normal text-center leading-tight` 
                   : 'text-sm'
               }`}
             >
-              {isSmallMobile ? 'Registraties' : isMobile ? 'Inschrijvingen' : 'Inschrijvingen & Goedkeuringen'}
+              {isSmallMobile ? 'Inschrijf.' : isMobile ? 'Inschrijvingen' : 'Inschrijvingen & Goedkeuringen'}
             </TabsTrigger>
             <TabsTrigger 
               value="notifications" 
               className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                isSmallMobile 
-                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
-                  : isMobile
-                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                isMobile 
+                  ? `${isSmallMobile ? 'text-xs' : 'text-sm'} py-2 px-1 h-auto min-h-[32px] whitespace-normal text-center leading-tight` 
                   : 'text-sm'
               }`}
             >
@@ -170,10 +166,8 @@ export default function Admin() {
             <TabsTrigger 
               value="export" 
               className={`data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm ${
-                isSmallMobile 
-                  ? 'text-xs py-2 px-1 h-auto min-h-[36px] whitespace-normal text-center leading-tight' 
-                  : isMobile
-                  ? 'text-sm py-2 px-2 h-auto min-h-[40px] whitespace-normal text-center'
+                isMobile 
+                  ? `${isSmallMobile ? 'text-xs' : 'text-sm'} py-2 px-1 h-auto min-h-[32px] whitespace-normal text-center leading-tight` 
                   : 'text-sm'
               }`}
             >
@@ -181,19 +175,19 @@ export default function Admin() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="shifts" className="space-y-4 sm:space-y-6">
+          <TabsContent value="shifts" className="space-y-3 w-full">
             <AdminShifts />
           </TabsContent>
 
-          <TabsContent value="registrations" className="space-y-4 sm:space-y-6">
+          <TabsContent value="registrations" className="space-y-3 w-full">
             <AdminRegistrations />
           </TabsContent>
 
-          <TabsContent value="notifications" className="space-y-4 sm:space-y-6">
+          <TabsContent value="notifications" className="space-y-3 w-full">
             <AdminNotifications />
           </TabsContent>
 
-          <TabsContent value="export" className="space-y-4 sm:space-y-6">
+          <TabsContent value="export" className="space-y-3 w-full">
             <AdminExport />
           </TabsContent>
         </Tabs>
