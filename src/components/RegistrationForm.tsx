@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { CalendarDays, Users } from "lucide-react";
+import { CalendarDays, Users, CheckCircle, AlertCircle, Mail, Phone, User, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { validateEmail, validatePhone, validateName, sanitizeInput } from "@/utils/inputValidation";
@@ -155,7 +155,7 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
 
     const title = encodeURIComponent(shift.title);
     const details = encodeURIComponent(`Bardienst: ${shift.title}`);
-    const location = encodeURIComponent("Voetbalclub");
+    const location = encodeURIComponent("v.v. Boskant");
     
     const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatDateTime(startDateTime)}/${formatDateTime(endDateTime)}&details=${details}&location=${location}`;
     
@@ -172,46 +172,69 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   if (showSuccess) {
     return (
       <Dialog open={true} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-green-600">Inschrijving succesvol!</DialogTitle>
-            <DialogDescription>
+        <DialogContent className="sm:max-w-lg bg-gradient-to-br from-green-50 to-emerald-50 border-green-200">
+          <DialogHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <DialogTitle className="text-2xl font-bold text-green-700">Inschrijving succesvol!</DialogTitle>
+            <DialogDescription className="text-green-600">
               Je bent succesvol ingeschreven voor de bardienst.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="bg-green-50 p-4 rounded-lg space-y-2">
-            <h3 className="font-semibold text-gray-800">{shift.title}</h3>
-            <div className="flex items-center text-sm text-gray-600">
-              <CalendarDays className="h-4 w-4 mr-2" />
-              {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
+          <div className="bg-white rounded-xl p-6 border border-green-200 shadow-sm space-y-4">
+            <h3 className="font-bold text-gray-900 text-lg">{shift.title}</h3>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex items-center text-gray-600">
+                <CalendarDays className="h-4 w-4 mr-2 text-blue-500" />
+                {format(shiftDate, "EEEE d MMMM", { locale: nl })}
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Clock className="h-4 w-4 mr-2 text-blue-500" />
+                {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
+              </div>
+              <div className="flex items-center text-gray-600">
+                <MapPin className="h-4 w-4 mr-2 text-blue-500" />
+                v.v. Boskant
+              </div>
+              <div className="flex items-center text-gray-600">
+                <Users className="h-4 w-4 mr-2 text-blue-500" />
+                Bardienst
+              </div>
             </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Users className="h-4 w-4 mr-2" />
-              {shift.start_time} - {shift.end_time}
+          </div>
+
+          <div className="space-y-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <h4 className="font-semibold text-blue-900 mb-2 flex items-center">
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Toevoegen aan agenda
+              </h4>
+              <p className="text-sm text-blue-700 mb-3">
+                Vergeet je bardienst niet! Voeg hem toe aan je agenda.
+              </p>
+              <Button
+                onClick={generateCalendarEvent}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <CalendarDays className="h-4 w-4 mr-2" />
+                Google Agenda
+              </Button>
+            </div>
+
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+              <h4 className="font-semibold text-yellow-900 mb-2 flex items-center">
+                <Mail className="h-4 w-4 mr-2" />
+                Email herinneringen
+              </h4>
+              <p className="text-sm text-yellow-800">
+                Je ontvangt automatisch een herinnering een week en drie dagen voor de bardienst.
+              </p>
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-sm text-blue-800 mb-3">
-              <strong>Wil je deze bardienst toevoegen aan je agenda?</strong>
-            </p>
-            <Button
-              onClick={generateCalendarEvent}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              <CalendarDays className="h-4 w-4 mr-2" />
-              Toevoegen aan Google Agenda
-            </Button>
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-sm text-yellow-800">
-              <strong>Let op:</strong> Je ontvangt een week voor de bardienst een herinnering via email.
-            </p>
-          </div>
-
-          <Button onClick={handleFinish} className="w-full">
+          <Button onClick={handleFinish} className="w-full bg-green-600 hover:bg-green-700 text-white">
             Sluiten
           </Button>
         </DialogContent>
@@ -221,80 +244,134 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-[#0c6be0]">Inschrijven voor bardienst</DialogTitle>
-          <DialogDescription>
-            Vul je gegevens in om je in te schrijven voor deze bardienst.
+      <DialogContent className="sm:max-w-lg bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+        <DialogHeader className="text-center">
+          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
+            <Users className="h-8 w-8 text-blue-600" />
+          </div>
+          <DialogTitle className="text-2xl font-bold text-blue-700">Inschrijven voor bardienst</DialogTitle>
+          <DialogDescription className="text-blue-600">
+            Vul je gegevens in om je in te schrijven.
           </DialogDescription>
         </DialogHeader>
 
         {/* Shift Details */}
-        <div className="bg-gray-50 p-4 rounded-lg space-y-2">
-          <h3 className="font-semibold text-gray-800">{shift.title}</h3>
-          <div className="flex items-center text-sm text-gray-600">
-            <CalendarDays className="h-4 w-4 mr-2" />
-            {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <Users className="h-4 w-4 mr-2" />
-            {shift.start_time} - {shift.end_time}
+        <div className="bg-white rounded-xl p-6 border border-blue-200 shadow-sm space-y-4">
+          <h3 className="font-bold text-gray-900 text-lg">{shift.title}</h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="flex items-center text-gray-600">
+              <CalendarDays className="h-4 w-4 mr-2 text-blue-500" />
+              {format(shiftDate, "EEEE d MMMM", { locale: nl })}
+            </div>
+            <div className="flex items-center text-gray-600">
+              <Clock className="h-4 w-4 mr-2 text-blue-500" />
+              {shift.start_time.slice(0, 5)} - {shift.end_time.slice(0, 5)}
+            </div>
           </div>
           {shift.remarks && (
-            <p className="text-sm text-gray-600 italic">{shift.remarks}</p>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-800 font-medium flex items-start">
+                <AlertCircle className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0" />
+                {shift.remarks}
+              </p>
+            </div>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Volledige naam *</Label>
-            <Input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleInputChange("name", e.target.value)}
-              placeholder="Je voor- en achternaam"
-              required
-              maxLength={50}
-              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.name ? 'border-red-500' : ''}`}
-            />
-            {errors.name && <p className="text-sm text-red-500">{errors.name}</p>}
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-gray-700 font-semibold flex items-center">
+                <User className="h-4 w-4 mr-2 text-blue-500" />
+                Volledige naam *
+              </Label>
+              <Input
+                id="name"
+                type="text"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                placeholder="Je voor- en achternaam"
+                required
+                maxLength={50}
+                className={`h-12 text-base border-2 transition-all duration-200 ${
+                  errors.name 
+                    ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                    : 'border-blue-200 focus:border-blue-500 bg-white'
+                }`}
+              />
+              {errors.name && (
+                <p className="text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.name}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-gray-700 font-semibold flex items-center">
+                <Mail className="h-4 w-4 mr-2 text-blue-500" />
+                Emailadres *
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+                placeholder="je@email.nl"
+                required
+                maxLength={100}
+                className={`h-12 text-base border-2 transition-all duration-200 ${
+                  errors.email 
+                    ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                    : 'border-blue-200 focus:border-blue-500 bg-white'
+                }`}
+              />
+              {errors.email && (
+                <p className="text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.email}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone" className="text-gray-700 font-semibold flex items-center">
+                <Phone className="h-4 w-4 mr-2 text-blue-500" />
+                Telefoonnummer *
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
+                placeholder="06-12345678"
+                required
+                maxLength={15}
+                className={`h-12 text-base border-2 transition-all duration-200 ${
+                  errors.phone 
+                    ? 'border-red-300 focus:border-red-500 bg-red-50' 
+                    : 'border-blue-200 focus:border-blue-500 bg-white'
+                }`}
+              />
+              {errors.phone && (
+                <p className="text-sm text-red-600 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  {errors.phone}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="email">Emailadres *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-              placeholder="je@email.nl"
-              required
-              maxLength={100}
-              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.email ? 'border-red-500' : ''}`}
-            />
-            {errors.email && <p className="text-sm text-red-500">{errors.email}</p>}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="phone">Telefoonnummer *</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => handleInputChange("phone", e.target.value)}
-              placeholder="06-12345678"
-              required
-              maxLength={15}
-              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.phone ? 'border-red-500' : ''}`}
-            />
-            {errors.phone && <p className="text-sm text-red-500">{errors.phone}</p>}
-          </div>
-
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-sm text-yellow-800">
-              <strong>Let op:</strong> Eenmaal ingeschreven kun je jezelf alleen uitschrijven na goedkeuring van de admin.
-            </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+            <h4 className="font-semibold text-yellow-900 mb-2 flex items-center">
+              <AlertCircle className="h-4 w-4 mr-2" />
+              Belangrijke informatie
+            </h4>
+            <ul className="text-sm text-yellow-800 space-y-1">
+              <li>• Eenmaal ingeschreven kun je alleen uitschrijven na admin goedkeuring</li>
+              <li>• Je ontvangt automatische email herinneringen</li>
+              <li>• Zorg dat je op tijd aanwezig bent</li>
+            </ul>
           </div>
 
           <div className="flex gap-3 pt-4">
@@ -302,7 +379,7 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
               type="button"
               variant="outline"
               onClick={onClose}
-              className="flex-1"
+              className="flex-1 h-12 border-2 border-gray-300 text-gray-700 hover:bg-gray-50"
               disabled={loading}
             >
               Annuleren
@@ -310,9 +387,16 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-[#0c6be0] hover:bg-[#0952b8]"
+              className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
             >
-              {loading ? "Bezig..." : "Inschrijven"}
+              {loading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  Bezig...
+                </>
+              ) : (
+                "Inschrijven"
+              )}
             </Button>
           </div>
         </form>
