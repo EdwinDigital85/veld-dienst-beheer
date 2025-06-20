@@ -85,7 +85,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       try {
         const emailResponse = await resend.emails.send({
-          from: "v.v. Boskant <noreply@yourdomain.com>",
+          from: "v.v. Boskant <onboarding@resend.dev>",
           to: [registration.email],
           subject: subject,
           html: emailContent,
@@ -132,7 +132,7 @@ const handler = async (req: Request): Promise<Response> => {
       JSON.stringify({ error: error.message }),
       {
         status: 500,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
+      headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
