@@ -201,6 +201,15 @@ export default function Index() {
                     </span>
                     <Button
                       variant="outline"
+                      onClick={() => setShowUnsubscribe(true)}
+                      className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                      size="sm"
+                    >
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Uitschrijven
+                    </Button>
+                    <Button
+                      variant="outline"
                       onClick={signOut}
                       className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
                       size="sm"
@@ -222,15 +231,6 @@ export default function Index() {
                   </Link>
                 )}
                 <Button
-                  variant="outline"
-                  onClick={() => setShowUnsubscribe(true)}
-                  className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
-                  size="sm"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Uitschrijven
-                </Button>
-                <Button
                   onClick={() => setShowAdminLogin(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
                   size="sm"
@@ -249,6 +249,18 @@ export default function Index() {
                   <div className="text-center text-sm text-gray-600 mb-3">
                     Welkom, {user?.user_metadata?.full_name || user?.email}
                   </div>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowUnsubscribe(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                    size="sm"
+                  >
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Uitschrijven
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -274,18 +286,6 @@ export default function Index() {
                   </Button>
                 </Link>
               )}
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowUnsubscribe(true);
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
-                size="sm"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Uitschrijven
-              </Button>
               <Button
                 onClick={() => {
                   setShowAdminLogin(true);
