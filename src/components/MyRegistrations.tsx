@@ -108,6 +108,23 @@ export default function MyRegistrations() {
     }
   };
 
+  const generateCalendarEvent = (shift: { title: string; shift_date: string; start_time: string; end_time: string }) => {
+    const startDateTime = new Date(`${shift.shift_date}T${shift.start_time}`);
+    const endDateTime = new Date(`${shift.shift_date}T${shift.end_time}`);
+    
+    const formatDateTime = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const title = encodeURIComponent(shift.title);
+    const details = encodeURIComponent(`Bardienst: ${shift.title}`);
+    const location = encodeURIComponent("v.v. Boskant");
+    
+    const googleUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatDateTime(startDateTime)}/${formatDateTime(endDateTime)}&details=${details}&location=${location}`;
+    
+    window.open(googleUrl, '_blank');
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -187,17 +204,26 @@ export default function MyRegistrations() {
                   </div>
                   <div className="flex flex-col items-end gap-2">
                     {getStatusBadge(registration.status)}
-                    {registration.status === 'active' && !isPastShift && (
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => requestUnsubscribe(registration.id, registration.bar_shifts.title)}
-                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                        onClick={() => generateCalendarEvent(registration.bar_shifts)}
+                        className="text-blue-600 border-blue-200 hover:bg-blue-50"
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        Uitschrijven
+                        <CalendarDays className="h-4 w-4" />
                       </Button>
-                    )}
+                      {registration.status === 'active' && !isPastShift && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => requestUnsubscribe(registration.id, registration.bar_shifts.title)}
+                          className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </CardHeader>

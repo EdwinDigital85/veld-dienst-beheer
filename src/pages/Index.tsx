@@ -202,11 +202,11 @@ export default function Index() {
                     <Button
                       variant="outline"
                       onClick={() => setShowUnsubscribe(true)}
-                      className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                      className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
                       size="sm"
                     >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Uitschrijven
+                      <CalendarDays className="h-4 w-4 mr-2" />
+                      Mijn bardiensten
                     </Button>
                     <Button
                       variant="outline"
@@ -255,11 +255,11 @@ export default function Index() {
                       setShowUnsubscribe(true);
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                    className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
                     size="sm"
                   >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Uitschrijven
+                    <CalendarDays className="h-4 w-4 mr-2" />
+                    Mijn bardiensten
                   </Button>
                   <Button
                     variant="outline"
