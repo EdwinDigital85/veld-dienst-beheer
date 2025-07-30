@@ -161,12 +161,21 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
       }
 
       console.log("Inserting new registration...");
-      // Prepare the registration data
+      
+      // Validate shift ID format
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(shift.id)) {
+        console.error("Invalid shift ID format:", shift.id);
+        throw new Error("Invalid shift ID format");
+      }
+      
+      // Prepare the registration data with explicit type casting
       const registrationData = {
         shift_id: shift.id,
         name: sanitizeInput(formData.name),
         email: formData.email.toLowerCase().trim(),
-        phone: formData.phone.replace(/[\s-]/g, ''), // Clean phone format
+        phone: formData.phone.replace(/[\s-]/g, ''),
+        status: 'active' as const
       };
 
       console.log("Registration data to insert:", registrationData);
