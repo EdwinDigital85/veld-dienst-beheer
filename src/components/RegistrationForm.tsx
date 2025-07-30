@@ -161,9 +161,17 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
       setShowSuccess(true);
     } catch (error) {
       console.error("Error registering:", error);
+      console.error("Full error object:", JSON.stringify(error, null, 2));
+      
+      // Show more specific error message
+      let errorMessage = "Er is een fout opgetreden. Probeer het opnieuw.";
+      if (error && typeof error === 'object' && 'message' in error) {
+        errorMessage = `Database fout: ${error.message}`;
+      }
+      
       toast({
         title: "Fout bij inschrijven",
-        description: "Er is een fout opgetreden. Probeer het opnieuw.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
