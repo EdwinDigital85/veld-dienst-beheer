@@ -4,8 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarDays, Clock, User, Mail, Phone, AlertTriangle, Check, X, RefreshCw } from "lucide-react";
+import { CalendarDays, Clock, User, Mail, Phone, AlertTriangle, Check, X, RefreshCw, Download, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,7 @@ export default function AdminRegistrations() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   useEffect(() => {
@@ -232,6 +234,95 @@ export default function AdminRegistrations() {
     }
   };
 
+  // Bulk action functions
+  const toggleSelectAll = () => {
+    const filtered = getFilteredRegistrations();
+    if (selectedIds.size === filtered.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filtered.map(r => r.id)));
+    }
+  };
+
+  const toggleSelectItem = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const bulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    
+    if (!confirm(`Weet je zeker dat je ${selectedIds.size} registraties wilt verwijderen?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("registrations")
+        .delete()
+        .in("id", Array.from(selectedIds));
+
+      if (error) throw error;
+
+      toast({
+        title: "Registraties verwijderd",
+        description: `${selectedIds.size} registraties zijn verwijderd.`,
+      });
+
+      setSelectedIds(new Set());
+      fetchRegistrations();
+    } catch (error) {
+      console.error("Error bulk deleting:", error);
+      toast({
+        title: "Fout",
+        description: "Kon niet alle registraties verwijderen.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const bulkExport = () => {
+    const filtered = getFilteredRegistrations();
+    const selected = filtered.filter(r => selectedIds.has(r.id));
+    
+    if (selected.length === 0) return;
+
+    const csvData = selected.map(reg => ({
+      Naam: reg.name,
+      Email: reg.email,
+      Telefoon: reg.phone,
+      Dienst: reg.bar_shifts.title,
+      Datum: format(new Date(reg.bar_shifts.shift_date), "dd-MM-yyyy"),
+      Tijd: `${reg.bar_shifts.start_time} - ${reg.bar_shifts.end_time}`,
+      Status: reg.status === "active" ? "Actief" : "Uitschrijfverzoek",
+      Ingeschreven: format(new Date(reg.created_at), "dd-MM-yyyy HH:mm")
+    }));
+
+    const headers = Object.keys(csvData[0]).join(",");
+    const csv = [
+      headers,
+      ...csvData.map(row => Object.values(row).map(val => `"${val}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `registraties-${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: "Export voltooid",
+      description: `${selected.length} registraties geëxporteerd.`,
+    });
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "active":
@@ -316,6 +407,49 @@ export default function AdminRegistrations() {
         </div>
       )}
 
+      {/* Bulk actions toolbar */}
+      {filteredRegistrations.length > 0 && (
+        <Card className="p-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                checked={selectedIds.size === filteredRegistrations.length && filteredRegistrations.length > 0}
+                onCheckedChange={toggleSelectAll}
+              />
+              <span className="text-sm font-medium">
+                {selectedIds.size > 0 
+                  ? `${selectedIds.size} van ${filteredRegistrations.length} geselecteerd`
+                  : "Alle selecteren"
+                }
+              </span>
+            </div>
+            
+            {selectedIds.size > 0 && (
+              <div className="flex gap-2 ml-auto">
+                <Button
+                  onClick={bulkExport}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Download className="h-4 w-4" />
+                  Exporteer ({selectedIds.size})
+                </Button>
+                <Button
+                  onClick={bulkDelete}
+                  variant="destructive"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Verwijder ({selectedIds.size})
+                </Button>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
+
       {filteredRegistrations.length === 0 ? (
         <div className="text-center py-12">
           <User className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -346,23 +480,30 @@ export default function AdminRegistrations() {
                   : "border-l-4 border-l-[#0c6be0]"
               }`}>
                 <CardHeader>
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg text-gray-800">
-                        {registration.bar_shifts.title}
-                      </CardTitle>
-                      <CardDescription className="space-y-1">
-                        <div className="flex items-center text-sm text-gray-600">
-                          <CalendarDays className="h-4 w-4 mr-2" />
-                          {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
-                        </div>
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Clock className="h-4 w-4 mr-2" />
-                          {registration.bar_shifts.start_time} - {registration.bar_shifts.end_time}
-                        </div>
-                      </CardDescription>
+                  <div className="flex items-start gap-4">
+                    <Checkbox
+                      checked={selectedIds.has(registration.id)}
+                      onCheckedChange={() => toggleSelectItem(registration.id)}
+                      className="mt-1"
+                    />
+                    <div className="flex flex-col sm:flex-row justify-between items-start gap-4 flex-1">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg text-gray-800">
+                          {registration.bar_shifts.title}
+                        </CardTitle>
+                        <CardDescription className="space-y-1">
+                          <div className="flex items-center text-sm text-gray-600">
+                            <CalendarDays className="h-4 w-4 mr-2" />
+                            {format(shiftDate, "EEEE d MMMM yyyy", { locale: nl })}
+                          </div>
+                          <div className="flex items-center text-sm text-gray-600">
+                            <Clock className="h-4 w-4 mr-2" />
+                            {registration.bar_shifts.start_time} - {registration.bar_shifts.end_time}
+                          </div>
+                        </CardDescription>
+                      </div>
+                      {getStatusBadge(registration.status)}
                     </div>
-                    {getStatusBadge(registration.status)}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
