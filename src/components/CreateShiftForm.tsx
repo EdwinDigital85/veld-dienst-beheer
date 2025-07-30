@@ -28,8 +28,7 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
     shift_date: "",
     start_time: "",
     end_time: "",
-    min_people: "",
-    max_people: "",
+    people_count: "1",
     remarks: "",
   });
   const [loading, setLoading] = useState(false);
@@ -88,12 +87,11 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
       newErrors.time = "Starttijd moet voor eindtijd liggen";
     }
 
-    // Validate people counts
-    const minPeople = parseInt(formData.min_people);
-    const maxPeople = parseInt(formData.max_people);
+    // Validate people count
+    const peopleCount = parseInt(formData.people_count);
     
-    if (!validatePeopleCount(minPeople, maxPeople)) {
-      newErrors.people = "Minimum moet tussen 1-50 zijn en kleiner dan maximum";
+    if (isNaN(peopleCount) || peopleCount < 1 || peopleCount > 50) {
+      newErrors.people = "Aantal personen moet tussen 1 en 50 zijn";
     }
 
     setErrors(newErrors);
@@ -122,8 +120,8 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
           shift_date: formData.shift_date,
           start_time: formData.start_time,
           end_time: formData.end_time,
-          min_people: parseInt(formData.min_people),
-          max_people: parseInt(formData.max_people),
+          min_people: 1,
+          max_people: parseInt(formData.people_count),
           remarks: formData.remarks.trim() ? sanitizeInput(formData.remarks) : null,
         });
 
@@ -217,36 +215,20 @@ export default function CreateShiftForm({ onClose, onSuccess }: CreateShiftFormP
             {errors.time && <p className="text-sm text-red-500 col-span-2">{errors.time}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="min_people">Min. personen *</Label>
-              <Input
-                id="min_people"
-                type="number"
-                min="1"
-                max="50"
-                value={formData.min_people}
-                onChange={(e) => handleInputChange("min_people", e.target.value)}
-                placeholder="2"
-                required
-                className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.people ? 'border-red-500' : ''}`}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="max_people">Max. personen *</Label>
-              <Input
-                id="max_people"
-                type="number"
-                min="1"
-                max="50"
-                value={formData.max_people}
-                onChange={(e) => handleInputChange("max_people", e.target.value)}
-                placeholder="4"
-                required
-                className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.people ? 'border-red-500' : ''}`}
-              />
-            </div>
-            {errors.people && <p className="text-sm text-red-500 col-span-2">{errors.people}</p>}
+          <div className="space-y-2">
+            <Label htmlFor="people_count">Aantal personen *</Label>
+            <Input
+              id="people_count"
+              type="number"
+              min="1"
+              max="50"
+              value={formData.people_count}
+              onChange={(e) => handleInputChange("people_count", e.target.value)}
+              placeholder="1"
+              required
+              className={`focus:border-[#0c6be0] focus:ring-[#0c6be0] ${errors.people ? 'border-red-500' : ''}`}
+            />
+            {errors.people && <p className="text-sm text-red-500">{errors.people}</p>}
           </div>
 
           <div className="space-y-2">
