@@ -180,20 +180,13 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
 
       console.log("Registration data to insert:", registrationData);
 
-      // Register the user with sanitized input - use raw SQL to ensure proper type casting
+      // Register the user with sanitized input using RPC function
       const { data: insertData, error: insertError } = await supabase
-        .rpc('sql', {
-          query: `
-            INSERT INTO registrations (shift_id, name, email, phone, status)
-            VALUES ($1, $2, $3, $4, 'active'::registration_status)
-            RETURNING *
-          `,
-          args: [
-            shift.id,
-            sanitizeInput(formData.name),
-            formData.email.toLowerCase().trim(),
-            formData.phone.replace(/[\s-]/g, '')
-          ]
+        .rpc('insert_registration', {
+          p_shift_id: shift.id,
+          p_name: sanitizeInput(formData.name),
+          p_email: formData.email.toLowerCase().trim(),
+          p_phone: formData.phone.replace(/[\s-]/g, '')
         });
 
       console.log("Insert result:", { insertData, insertError });

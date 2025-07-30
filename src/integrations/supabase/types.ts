@@ -159,7 +159,15 @@ export type Database = {
           status?: Database["public"]["Enums"]["registration_status"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_registrations_shift_id"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "bar_shifts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -194,6 +202,24 @@ export type Database = {
           shift_date: string
           start_time: string
           end_time: string
+        }[]
+      }
+      insert_registration: {
+        Args: {
+          p_shift_id: string
+          p_name: string
+          p_email: string
+          p_phone: string
+        }
+        Returns: {
+          id: string
+          shift_id: string
+          name: string
+          email: string
+          phone: string
+          status: string
+          created_at: string
+          updated_at: string
         }[]
       }
       is_admin: {

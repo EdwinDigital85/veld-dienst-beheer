@@ -49,7 +49,7 @@ export default function MyRegistrations() {
           phone,
           status,
           created_at,
-          bar_shifts:shift_id (
+          bar_shifts!shift_id (
             title,
             shift_date,
             start_time,

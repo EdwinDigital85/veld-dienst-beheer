@@ -77,7 +77,7 @@ export default function AdminRegistrations() {
           created_at,
           updated_at,
           shift_id,
-          bar_shifts (
+          bar_shifts!shift_id (
             title,
             shift_date,
             start_time,
