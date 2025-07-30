@@ -113,10 +113,19 @@ export default function Index() {
   };
 
   const getFilteredShifts = () => {
+    // Filter out past shifts first
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set to start of day for comparison
+    
+    const currentShifts = barShifts.filter(shift => {
+      const shiftDate = new Date(shift.shift_date);
+      return shiftDate >= today; // Only show shifts from today onwards
+    });
+
     if (!hideUnavailable) {
-      return barShifts;
+      return currentShifts;
     }
-    return barShifts.filter(shift => canRegister(shift));
+    return currentShifts.filter(shift => canRegister(shift));
   };
 
   const generateCalendarEvent = (shift: BarShift) => {
