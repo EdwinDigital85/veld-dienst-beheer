@@ -16,29 +16,18 @@ export const useAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        await fetchProfile(session.user.id);
-      }
-      
-      setLoading(false);
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
+    // Listen for auth changes FIRST (critical for preventing deadlocks)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
+        // Only synchronous state updates here to prevent deadlocks
         setSession(session);
         setUser(session?.user ?? null);
         
+        // Defer Supabase calls with setTimeout to prevent deadlock
         if (session?.user) {
-          await fetchProfile(session.user.id);
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+          }, 0);
         } else {
           setProfile(null);
         }
@@ -46,6 +35,21 @@ export const useAuth = () => {
         setLoading(false);
       }
     );
+
+    // THEN check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        // Use setTimeout here too for consistency
+        setTimeout(() => {
+          fetchProfile(session.user.id);
+        }, 0);
+      }
+      
+      setLoading(false);
+    });
 
     return () => subscription.unsubscribe();
   }, []);
