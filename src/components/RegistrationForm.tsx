@@ -180,14 +180,17 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
 
       console.log("Registration data to insert:", registrationData);
 
-      // Register the user with sanitized input using RPC function
+      // Register the user with direct table insert
       const { data: insertData, error: insertError } = await supabase
-        .rpc('insert_registration', {
-          p_shift_id: shift.id,
-          p_name: sanitizeInput(formData.name),
-          p_email: formData.email.toLowerCase().trim(),
-          p_phone: formData.phone.replace(/[\s-]/g, '')
-        });
+        .from("registrations")
+        .insert({
+          shift_id: shift.id,
+          name: sanitizeInput(formData.name),
+          email: formData.email.toLowerCase().trim(),
+          phone: formData.phone.replace(/[\s-]/g, '')
+          // Don't specify status - let the default handle it
+        })
+        .select();
 
       console.log("Insert result:", { insertData, insertError });
 
