@@ -6,16 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { CalendarDays, Users, MessageSquare, LogOut, EyeOff, Eye, Clock, MapPin, Star, Menu, User, LogIn } from "lucide-react";
+import { CalendarDays, Users, MessageSquare, LogOut, EyeOff, Eye, Clock, MapPin, Star, Menu } from "lucide-react";
 import { format } from "date-fns";
 import { nl } from "date-fns/locale";
-import { Link } from "react-router-dom";
 import RegistrationForm from "@/components/RegistrationForm";
 import AdminLogin from "@/components/AdminLogin";
 import UnsubscribeModal from "@/components/UnsubscribeModal";
 import BarShiftCalendar from "@/components/BarShiftCalendar";
 import { useIsMobile, useIsSmallMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/hooks/useAuth";
 
 interface BarShift {
   id: string;
@@ -40,7 +38,6 @@ export default function Index() {
   const [hideUnavailable, setHideUnavailable] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const { user, signOut, isAuthenticated } = useAuth();
   const isMobile = useIsMobile();
   const isSmallMobile = useIsSmallMobile();
 
@@ -113,19 +110,10 @@ export default function Index() {
   };
 
   const getFilteredShifts = () => {
-    // Filter out past shifts first
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Set to start of day for comparison
-    
-    const currentShifts = barShifts.filter(shift => {
-      const shiftDate = new Date(shift.shift_date);
-      return shiftDate >= today; // Only show shifts from today onwards
-    });
-
     if (!hideUnavailable) {
-      return currentShifts;
+      return barShifts;
     }
-    return currentShifts.filter(shift => canRegister(shift));
+    return barShifts.filter(shift => canRegister(shift));
   };
 
   const generateCalendarEvent = (shift: BarShift) => {
@@ -203,42 +191,15 @@ export default function Index() {
             {/* Desktop Action Buttons */}
             {!isMobile && (
               <div className="flex items-center space-x-3">
-                {isAuthenticated ? (
-                  <>
-                    <span className="text-sm text-gray-600">
-                      Welkom, {user?.user_metadata?.full_name || user?.email}
-                    </span>
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowUnsubscribe(true)}
-                      className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
-                      size="sm"
-                    >
-                      <CalendarDays className="h-4 w-4 mr-2" />
-                      Mijn bardiensten
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={signOut}
-                      className="bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                      size="sm"
-                    >
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Uitloggen
-                    </Button>
-                  </>
-                ) : (
-                  <Link to="/auth">
-                    <Button
-                      variant="outline"
-                      className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                      size="sm"
-                    >
-                      <LogIn className="h-4 w-4 mr-2" />
-                      Inloggen
-                    </Button>
-                  </Link>
-                )}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowUnsubscribe(true)}
+                  className="bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                  size="sm"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Uitschrijven
+                </Button>
                 <Button
                   onClick={() => setShowAdminLogin(true)}
                   className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105"
@@ -253,48 +214,18 @@ export default function Index() {
           {/* Mobile Menu Dropdown */}
           {isMobile && mobileMenuOpen && (
             <div className="border-t border-blue-100 py-4 space-y-3">
-              {isAuthenticated ? (
-                <>
-                  <div className="text-center text-sm text-gray-600 mb-3">
-                    Welkom, {user?.user_metadata?.full_name || user?.email}
-                  </div>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowUnsubscribe(true);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100 hover:border-blue-300 transition-all duration-200"
-                    size="sm"
-                  >
-                    <CalendarDays className="h-4 w-4 mr-2" />
-                    Mijn bardiensten
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      signOut();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                    size="sm"
-                  >
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Uitloggen
-                  </Button>
-                </>
-              ) : (
-                <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>
-                  <Button
-                    variant="outline"
-                    className="w-full bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-                    size="sm"
-                  >
-                    <LogIn className="h-4 w-4 mr-2" />
-                    Inloggen
-                  </Button>
-                </Link>
-              )}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowUnsubscribe(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full bg-orange-50 border-orange-200 text-orange-700 hover:bg-orange-100 hover:border-orange-300 transition-all duration-200"
+                size="sm"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Uitschrijven
+              </Button>
               <Button
                 onClick={() => {
                   setShowAdminLogin(true);

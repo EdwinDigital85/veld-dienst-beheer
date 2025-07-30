@@ -99,34 +99,15 @@ export type Database = {
           registration_id?: string
           sent_at?: string
         }
-        Relationships: []
-      }
-      profiles: {
-        Row: {
-          created_at: string
-          id: string
-          name: string | null
-          phone: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          name?: string | null
-          phone?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          name?: string | null
-          phone?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "email_notifications_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registrations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       registrations: {
         Row: {
@@ -161,7 +142,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_registrations_shift_id"
+            foreignKeyName: "registrations_shift_id_fkey"
             columns: ["shift_id"]
             isOneToOne: false
             referencedRelation: "bar_shifts"
@@ -202,24 +183,6 @@ export type Database = {
           shift_date: string
           start_time: string
           end_time: string
-        }[]
-      }
-      insert_registration: {
-        Args: {
-          p_shift_id: string
-          p_name: string
-          p_email: string
-          p_phone: string
-        }
-        Returns: {
-          id: string
-          shift_id: string
-          name: string
-          email: string
-          phone: string
-          status: string
-          created_at: string
-          updated_at: string
         }[]
       }
       is_admin: {

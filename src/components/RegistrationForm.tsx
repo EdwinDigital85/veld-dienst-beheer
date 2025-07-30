@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -10,8 +11,6 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { validateEmail, validatePhone, validateName, sanitizeInput } from "@/utils/inputValidation";
 import { useIsMobile, useIsSmallMobile } from "@/hooks/use-mobile";
-import { useUserPreferences } from "@/hooks/useUserPreferences";
-import { useAuth } from "@/hooks/useAuth";
 
 interface BarShift {
   id: string;
@@ -32,8 +31,6 @@ interface RegistrationFormProps {
 }
 
 export default function RegistrationForm({ shift, onClose, onSuccess }: RegistrationFormProps) {
-  const { preferences, savePreferences, isLoaded } = useUserPreferences();
-  const { user, profile, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -46,30 +43,6 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   
   const isMobile = useIsMobile();
   const isSmallMobile = useIsSmallMobile();
-
-  // Load user data from auth profile or localStorage preferences
-  useEffect(() => {
-    console.log("Loading user data...", { isAuthenticated, profile, user, isLoaded, preferences });
-    
-    if (isAuthenticated && profile) {
-      // If user is logged in, use their profile data
-      const userData = {
-        name: profile.name || user?.user_metadata?.full_name || user?.email || "",
-        email: user?.email || "",
-        phone: profile.phone || "",
-      };
-      console.log("Setting form data from profile:", userData);
-      setFormData(userData);
-    } else if (isLoaded) {
-      // If not logged in, use saved preferences
-      console.log("Setting form data from preferences:", preferences);
-      setFormData({
-        name: preferences.name,
-        email: preferences.email,
-        phone: preferences.phone,
-      });
-    }
-  }, [isAuthenticated, profile, user, preferences, isLoaded]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -93,13 +66,7 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("Starting registration process...");
-    console.log("Form data:", formData);
-    console.log("Shift data:", shift);
-    console.log("User authentication status:", { isAuthenticated, user: user?.id });
-    
     if (!validateForm()) {
-      console.log("Form validation failed:", errors);
       toast({
         title: "Validatie fouten",
         description: "Controleer de ingevoerde gegevens",
@@ -111,17 +78,9 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
     setLoading(true);
 
     try {
-      console.log("Checking if shift is full...");
       // Check if shift is still available
-      const { data: isFullData, error: fullCheckError } = await supabase
+      const { data: isFullData } = await supabase
         .rpc("is_shift_full", { shift_uuid: shift.id });
-
-      console.log("Shift full check result:", { isFullData, fullCheckError });
-
-      if (fullCheckError) {
-        console.error("Error checking if shift is full:", fullCheckError);
-        throw new Error(`Error checking availability: ${fullCheckError.message}`);
-      }
 
       if (isFullData) {
         toast({
@@ -133,22 +92,14 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
         return;
       }
 
-      console.log("Checking for existing registration...");
       // Check if user is already registered
-      const { data: existingRegistration, error: existingError } = await supabase
+      const { data: existingRegistration } = await supabase
         .from("registrations")
         .select("id")
         .eq("shift_id", shift.id)
         .eq("email", formData.email.toLowerCase())
         .eq("status", "active")
         .maybeSingle();
-
-      console.log("Existing registration check:", { existingRegistration, existingError });
-
-      if (existingError) {
-        console.error("Error checking existing registration:", existingError);
-        throw new Error(`Error checking existing registration: ${existingError.message}`);
-      }
 
       if (existingRegistration) {
         toast({
@@ -160,58 +111,17 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
         return;
       }
 
-      console.log("Inserting new registration...");
-      
-      // Validate shift ID format
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-      if (!uuidRegex.test(shift.id)) {
-        console.error("Invalid shift ID format:", shift.id);
-        throw new Error("Invalid shift ID format");
-      }
-      
-      // Prepare the registration data with explicit type casting
-      const registrationData = {
-        shift_id: shift.id,
-        name: sanitizeInput(formData.name),
-        email: formData.email.toLowerCase().trim(),
-        phone: formData.phone.replace(/[\s-]/g, ''),
-        status: 'active' as const
-      };
-
-      console.log("Registration data to insert:", registrationData);
-
-      // Register the user with direct table insert
-      const { data: insertData, error: insertError } = await supabase
+      // Register the user with sanitized input
+      const { error } = await supabase
         .from("registrations")
         .insert({
           shift_id: shift.id,
           name: sanitizeInput(formData.name),
           email: formData.email.toLowerCase().trim(),
-          phone: formData.phone.replace(/[\s-]/g, '')
-          // Don't specify status - let the default handle it
-        })
-        .select();
-
-      console.log("Insert result:", { insertData, insertError });
-
-      if (insertError) {
-        console.error("Insert error details:", {
-          message: insertError.message,
-          code: insertError.code,
-          details: insertError.details,
-          hint: insertError.hint,
+          phone: formData.phone.replace(/[\s-]/g, ''), // Clean phone format
         });
-        throw insertError;
-      }
 
-      console.log("Registration successful!");
-
-      // Save user preferences for next time
-      savePreferences({
-        name: sanitizeInput(formData.name),
-        email: formData.email.toLowerCase().trim(),
-        phone: formData.phone.replace(/[\s-]/g, '')
-      });
+      if (error) throw error;
 
       toast({
         title: "Inschrijving succesvol!",
@@ -219,34 +129,11 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
       });
 
       setShowSuccess(true);
-    } catch (error: any) {
-      console.error("Registration error caught:", error);
-      console.error("Error details:", {
-        message: error?.message,
-        code: error?.code,
-        details: error?.details,
-        hint: error?.hint,
-        stack: error?.stack
-      });
-      
-      // Show more specific error message
-      let errorMessage = "Er is een fout opgetreden. Probeer het opnieuw.";
-      
-      if (error?.message) {
-        if (error.message.includes("shift_status")) {
-          errorMessage = "Database configuratie probleem. Neem contact op met de beheerder.";
-        } else if (error.code === "23505") {
-          errorMessage = "Je bent al ingeschreven voor deze bardienst.";
-        } else if (error.code === "23503") {
-          errorMessage = "Bardienst niet gevonden. Ververs de pagina en probeer opnieuw.";
-        } else {
-          errorMessage = `Fout: ${error.message}`;
-        }
-      }
-      
+    } catch (error) {
+      console.error("Error registering:", error);
       toast({
         title: "Fout bij inschrijven",
-        description: errorMessage,
+        description: "Er is een fout opgetreden. Probeer het opnieuw.",
         variant: "destructive",
       });
     } finally {
@@ -366,7 +253,7 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className={`${isMobile ? 'sm:max-w-[95vw] max-w-[90vw]' : 'sm:max-w-lg'} bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200 ${isSmallMobile ? 'p-4' : ''} max-h-[90vh] overflow-y-auto`}>
         <DialogHeader className="text-center">
-          <div className={`mx-auto ${isSmallMobile ? 'w-12 h-12' : 'w-16 h-16'} bg-blue-100 rounded-full flex items-center justify-center mb-4`}>
+          <div className={`mx-auto ${isSmallMobile ? 'w-12 h-12' : 'w-16 h-16'} bg-blue-100 rounde d-full flex items-center justify-center mb-4`}>
             <Users className={`${isSmallMobile ? 'h-6 w-6' : 'h-8 w-8'} text-blue-600`} />
           </div>
           <DialogTitle className={`${isSmallMobile ? 'text-xl' : 'text-2xl'} font-bold text-blue-700`}>Inschrijven voor bardienst</DialogTitle>
@@ -375,6 +262,7 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
           </DialogDescription>
         </DialogHeader>
 
+        {/* Shift Details */}
         <div className={`bg-white rounded-xl ${isSmallMobile ? 'p-4' : 'p-6'} border border-blue-200 shadow-sm space-y-3 sm:space-y-4`}>
           <h3 className={`font-bold text-gray-900 ${isSmallMobile ? 'text-base' : 'text-lg'}`}>{shift.title}</h3>
           <div className={`grid ${isMobile ? 'grid-cols-1 gap-2' : 'grid-cols-2 gap-4'} ${isSmallMobile ? 'text-xs' : 'text-sm'}`}>
