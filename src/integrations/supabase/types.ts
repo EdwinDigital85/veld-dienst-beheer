@@ -99,15 +99,7 @@ export type Database = {
           registration_id?: string
           sent_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "email_notifications_registration_id_fkey"
-            columns: ["registration_id"]
-            isOneToOne: false
-            referencedRelation: "registrations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -167,15 +159,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["registration_status"]
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "registrations_shift_id_fkey"
-            columns: ["shift_id"]
-            isOneToOne: false
-            referencedRelation: "bar_shifts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
