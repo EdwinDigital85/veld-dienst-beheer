@@ -6,7 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { AlertTriangle } from "lucide-react";
+import MyRegistrations from "./MyRegistrations";
 
 interface UnsubscribeModalProps {
   onClose: () => void;
@@ -15,6 +17,7 @@ interface UnsubscribeModalProps {
 export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const { isAuthenticated } = useAuth();
   const { toast } = useToast();
 
   const handleUnsubscribe = async (e: React.FormEvent) => {
@@ -132,59 +135,72 @@ export default function UnsubscribeModal({ onClose }: UnsubscribeModalProps) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className={isAuthenticated ? "sm:max-w-2xl" : "sm:max-w-md"}>
         <DialogHeader>
-          <DialogTitle className="text-[#0c6be0]">Uitschrijven voor bardienst</DialogTitle>
+          <DialogTitle className="text-[#0c6be0]">
+            {isAuthenticated ? "Mijn Registraties" : "Uitschrijven voor bardienst"}
+          </DialogTitle>
           <DialogDescription>
-            Vul je emailadres in om een uitschrijfverzoek in te dienen.
+            {isAuthenticated 
+              ? "Beheer je inschrijvingen voor bardiensten"
+              : "Vul je emailadres in om een uitschrijfverzoek in te dienen."
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
-          <div className="flex items-center">
-            <AlertTriangle className="h-5 w-5 text-orange-600 mr-2" />
-            <div>
-              <p className="text-orange-800 font-medium">Let op:</p>
-              <p className="text-orange-700 text-sm">
-                Je uitschrijfverzoek moet door de admin goedgekeurd worden voordat je definitief uitgeschreven bent.
-              </p>
+        {isAuthenticated ? (
+          <div className="max-h-[60vh] overflow-y-auto">
+            <MyRegistrations />
+          </div>
+        ) : (
+          <>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center">
+                <AlertTriangle className="h-5 w-5 text-orange-600 mr-2" />
+                <div>
+                  <p className="text-orange-800 font-medium">Let op:</p>
+                  <p className="text-orange-700 text-sm">
+                    Je uitschrijfverzoek moet door de admin goedgekeurd worden voordat je definitief uitgeschreven bent.
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <form onSubmit={handleUnsubscribe} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Emailadres *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="je@email.nl"
-              required
-              className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
-            />
-          </div>
+            <form onSubmit={handleUnsubscribe} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Emailadres *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="je@email.nl"
+                  required
+                  className="focus:border-[#0c6be0] focus:ring-[#0c6be0]"
+                />
+              </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={loading}
-            >
-              Annuleren
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="flex-1 bg-orange-600 hover:bg-orange-700"
-            >
-              {loading ? "Bezig..." : "Uitschrijfverzoek indienen"}
-            </Button>
-          </div>
-        </form>
+              <div className="flex gap-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  className="flex-1"
+                  disabled={loading}
+                >
+                  Annuleren
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-orange-600 hover:bg-orange-700"
+                >
+                  {loading ? "Bezig..." : "Uitschrijfverzoek indienen"}
+                </Button>
+              </div>
+            </form>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
