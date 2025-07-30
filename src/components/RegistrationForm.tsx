@@ -12,6 +12,7 @@ import { nl } from "date-fns/locale";
 import { validateEmail, validatePhone, validateName, sanitizeInput } from "@/utils/inputValidation";
 import { useIsMobile, useIsSmallMobile } from "@/hooks/use-mobile";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BarShift {
   id: string;
@@ -33,6 +34,7 @@ interface RegistrationFormProps {
 
 export default function RegistrationForm({ shift, onClose, onSuccess }: RegistrationFormProps) {
   const { preferences, savePreferences, isLoaded } = useUserPreferences();
+  const { user, profile, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -46,16 +48,24 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   const isMobile = useIsMobile();
   const isSmallMobile = useIsSmallMobile();
 
-  // Load saved preferences when component mounts
+  // Load user data from auth profile or localStorage preferences
   useEffect(() => {
-    if (isLoaded) {
+    if (isAuthenticated && profile) {
+      // If user is logged in, use their profile data
+      setFormData({
+        name: profile.name || user?.user_metadata?.full_name || user?.email || "",
+        email: user?.email || "",
+        phone: profile.phone || "",
+      });
+    } else if (isLoaded) {
+      // If not logged in, use saved preferences
       setFormData({
         name: preferences.name,
         email: preferences.email,
         phone: preferences.phone,
       });
     }
-  }, [preferences, isLoaded]);
+  }, [isAuthenticated, profile, user, preferences, isLoaded]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
