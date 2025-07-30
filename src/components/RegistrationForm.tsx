@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { nl } from "date-fns/locale";
 import { validateEmail, validatePhone, validateName, sanitizeInput } from "@/utils/inputValidation";
 import { useIsMobile, useIsSmallMobile } from "@/hooks/use-mobile";
+import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 interface BarShift {
   id: string;
@@ -31,6 +32,7 @@ interface RegistrationFormProps {
 }
 
 export default function RegistrationForm({ shift, onClose, onSuccess }: RegistrationFormProps) {
+  const { preferences, savePreferences, isLoaded } = useUserPreferences();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -43,6 +45,17 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
   
   const isMobile = useIsMobile();
   const isSmallMobile = useIsSmallMobile();
+
+  // Load saved preferences when component mounts
+  useEffect(() => {
+    if (isLoaded) {
+      setFormData({
+        name: preferences.name,
+        email: preferences.email,
+        phone: preferences.phone,
+      });
+    }
+  }, [preferences, isLoaded]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -122,6 +135,13 @@ export default function RegistrationForm({ shift, onClose, onSuccess }: Registra
         });
 
       if (error) throw error;
+
+      // Save user preferences for next time
+      savePreferences({
+        name: sanitizeInput(formData.name),
+        email: formData.email.toLowerCase().trim(),
+        phone: formData.phone.replace(/[\s-]/g, '')
+      });
 
       toast({
         title: "Inschrijving succesvol!",
